@@ -1,8 +1,7 @@
 use aiken/cbor
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/list
 use aiken/transaction/credential.{
-  Address, Credential, Inline, Script, ScriptCredential, StakeCredential,
+  Address, Inline, Script, ScriptCredential, StakeCredential,
   VerificationKeyCredential,
 }
 use aiken/transaction/value.{PolicyId}

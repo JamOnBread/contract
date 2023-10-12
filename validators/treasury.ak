@@ -1,7 +1,4 @@
-use aiken/hash.{Blake2b_224, Hash}
-use aiken/list
 use aiken/transaction.{ScriptContext}
-use aiken/transaction/credential.{VerificationKey}
 use common/check
 use common/types
 

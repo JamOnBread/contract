@@ -3,7 +3,7 @@ use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
 use aiken/transaction
 use aiken/transaction/credential.{
-  Address, Credential, ScriptCredential, VerificationKey,
+  Address, Credential, VerificationKey,
   VerificationKeyCredential,
 }
 use aiken/transaction/value
