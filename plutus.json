@@ -8,9 +8,62 @@
   },
   "validators": [
     {
+      "title": "assets.mint",
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "parameters": [
+        {
+          "title": "utxo",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1OutputReference"
+          }
+        }
+      ],
+      "compiledCode": "58db0100003232323232323232323232222533300832323232533300c3370e900018058008991919299980799b87480000044c92898068010b18068009991191980080080191299980a0008a6103d87a80001323253330133375e6601e60220049000002899ba548000cc05c0092f5c02660080080026030004602c0026eb0cc024c02c0112000008300a0011630100013010002300e0013006001149858cc0040052000222233330073370e0020060184666600a00a66e000112002300e001002002230053754002460066ea80055cd2ab9d5573caae7d5d02ba15745",
+      "hash": "25bd582a0b1ef0c62e49ae853aa28f042eb75028c53dd034a0704578"
+    },
+    {
+      "title": "common.always_fail",
+      "datum": {
+        "title": "_datum",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "compiledCode": "500100003222253330044a02930b2b9a01",
+      "hash": "792d0602968de1d5378c0914ca308ff4925014717505a63306dee11f"
+    },
+    {
+      "title": "common.always_succeed",
+      "datum": {
+        "title": "_datum",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "compiledCode": "500100003222253330044a22930b2b9a01",
+      "hash": "90592520b329fe08f0e93946ecd405e49b7480795e27cb618f002d88"
+    },
+    {
       "title": "staking.withdrawal",
       "redeemer": {
-        "title": "redeemer",
+        "title": "_redeemer",
         "schema": {
           "$ref": "#/definitions/Data"
         }
@@ -41,7 +94,7 @@
         }
       },
       "redeemer": {
-        "title": "redeemer",
+        "title": "_redeemer",
         "schema": {
           "$ref": "#/definitions/Data"
         }
@@ -81,6 +134,44 @@
           "dataType": "constructor",
           "index": 1,
           "fields": []
+        }
+      ]
+    },
+    "aiken/transaction/OutputReference": {
+      "title": "OutputReference",
+      "description": "An `OutputReference` is a unique reference to an output on-chain. The `output_index`\n corresponds to the position in the output list of the transaction (identified by its id)\n that produced that output",
+      "anyOf": [
+        {
+          "title": "OutputReference",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "transaction_id",
+              "$ref": "#/definitions/aiken~1transaction~1TransactionId"
+            },
+            {
+              "title": "output_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/TransactionId": {
+      "title": "TransactionId",
+      "description": "A unique transaction identifier, as the hash of a transaction body. Note that the transaction id\n isn't a direct hash of the `Transaction` as visible on-chain. Rather, they correspond to hash\n digests of transaction body as they are serialized on the network.",
+      "anyOf": [
+        {
+          "title": "TransactionId",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "hash",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
         }
       ]
     },

@@ -7,12 +7,9 @@ use common/types
 use common/check
 
 
-type Redeemer {
-  msg: ByteArray,
-}
-
 validator() {
-  fn spending(datum: types.WithdrawalMethod, redeemer: _, context: ScriptContext) -> Bool {
+
+  fn spending(datum: types.WithdrawalMethod, _redeemer: Data, context: ScriptContext) -> Bool {
     let credential = check.get_script_hash(context)
     let validated = check.transaction_is_validated(context, datum)
     let inputs = check.number_inputs_address_datum(context.transaction.inputs, credential, datum)
@@ -22,4 +19,5 @@ validator() {
     // If transaction is validated (by credential or token) or outputs (lovelace) are bigger then inputs (lovelace)
     (inputs.1st == outputs.1st && (validated || inputs.2nd < outputs.2nd))
   }  
+
 }
