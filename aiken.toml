@@ -1,10 +1,10 @@
-name = "job/contract"
+name = "JamOnBread/contract"
 version = "0.0.0"
 license = "Apache-2.0"
-description = "Aiken contracts for project 'job/contract'"
+description = "Aiken contracts for project 'JamOnBread/contract'"
 
 [repository]
-user = "job"
+user = "JamOnBread"
 project = "contract"
 platform = "github"
 
