@@ -3,7 +3,7 @@ use common/check
 use common/types
 
 validator {
-  fn spending(
+  fn spending_v1(
     datum: types.WithdrawalMethod,
     _redeemer: Data,
     context: ScriptContext,

@@ -8,7 +8,7 @@
   },
   "validators": [
     {
-      "title": "assets.mint",
+      "title": "assets.mint_v1",
       "redeemer": {
         "title": "_redeemer",
         "schema": {
@@ -27,7 +27,7 @@
       "hash": "25bd582a0b1ef0c62e49ae853aa28f042eb75028c53dd034a0704578"
     },
     {
-      "title": "common.always_fail",
+      "title": "common.always_fail_v1",
       "datum": {
         "title": "_datum",
         "schema": {
@@ -44,7 +44,7 @@
       "hash": "792d0602968de1d5378c0914ca308ff4925014717505a63306dee11f"
     },
     {
-      "title": "common.always_succeed",
+      "title": "common.always_succeed_v1",
       "datum": {
         "title": "_datum",
         "schema": {
@@ -61,7 +61,7 @@
       "hash": "90592520b329fe08f0e93946ecd405e49b7480795e27cb618f002d88"
     },
     {
-      "title": "staking.withdrawal",
+      "title": "staking.withdrawal_v1",
       "redeemer": {
         "title": "_redeemer",
         "schema": {
@@ -86,7 +86,7 @@
       "hash": "9330f75b7edd98279059a1897131a983a21ee475523700913701273f"
     },
     {
-      "title": "treasury.spending",
+      "title": "treasury.spending_v1",
       "datum": {
         "title": "datum",
         "schema": {

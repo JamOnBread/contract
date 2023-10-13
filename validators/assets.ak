@@ -1,7 +1,7 @@
 use aiken/transaction.{Mint, OutputReference, ScriptContext, find_input}
 
 validator(utxo: OutputReference) {
-  fn mint(_redeemer: Data, context: ScriptContext) -> Bool {
+  fn mint_v1(_redeemer: Data, context: ScriptContext) -> Bool {
     // Check if we spend predefined input
     let ScriptContext { transaction, purpose } = context
 
