@@ -61,6 +61,43 @@
       "hash": "90592520b329fe08f0e93946ecd405e49b7480795e27cb618f002d88"
     },
     {
+      "title": "instant_buy.spend_v1",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/common~1types~1InstantBuyDatum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/common~1types~1InstantBuyRedeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "treasury_script",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "stake_addresses",
+          "schema": {
+            "$ref": "#/definitions/List$aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+          }
+        },
+        {
+          "title": "job",
+          "schema": {
+            "$ref": "#/definitions/common~1types~1WithdrawalMethod"
+          }
+        }
+      ],
+      "compiledCode": "5903e4010000323232323232323232322322322222323232323253330123253330133370e900100089919299980a99b87480000044c8c8cc88c8cc00400400c894ccc07800452809919299980e99b8f00200514a226600800800260420046eb8c07c004dd619809980a99809980a805a400090080009bae301a001301300214a060260026601e60226601e602201290002400026464940dd6180c000980880418088038a4c2c64a66602466e1d20000011323253330173019002132498c8cc004004008894ccc06400452613233003003301c002323253330183370e9000000899191919299980f981080109924c601a0022c603e002603e0046eb4c074004c05800858c058004c06800458dd6180b80098080038a99980919b874800800454ccc054c04001c526161630100063253330113370e9000000899191919191919191919299980f181000109919191924c64a66603e66e1d20000011323253330243026002132498c94ccc088cdc3a4000002264646464a666052605600426493180b8008b181480098148011bad30270013020002163020001163024001301d0051533301f3370e90010008a999811180e8028a4c2c2c603a00864a66603c66e1d20000011323253330233025002132498c04400458c08c004c07002054ccc078cdc3a40040022a66604260380102930b0b180e003980680418068048b180f000980f0011bad301c001301c002301a001301a002301800130180023016001300f00716300f00623253330113370e900000089919299980b180c00109924c600a0022c602c002601e0042a66602266e1d20020011323253330163018002132498c94ccc050cdc3a4000002264646464a666036603a0042930b1bad301b001301b002375c603200260240042c60240022c602c002601e0042c601e002464a66602066e1d20000011323232325333017301900213232498c94ccc058cdc3a400000226464a666036603a0042649319299980c99b87480000044c8c94ccc078c0800084c926300e00116301e0013017002153330193370e90010008991919191919299981118120010a4c2c6eb4c088004c088008dd6981000098100011bad301e001301700216301700116301b0013014003153330163370e90010008a99980c980a0018a4c2c2c6028004600e0062c602e002602e004602a002601c0042c601c002464a66601e66e1d20000011323253330143016002149858dd7180a00098068010a99980799b87480080044c8c94ccc050c05800852616375c6028002601a0042c601a0026eb0004dd700099800800a40004444666600e66e1c00400c02c8cccc014014cdc000224004601a0020040044600a6ea80048c00cdd5000ab9a5573aaae7955cfaba15745",
+      "hash": "16257434d0e33f8d532cb4062ba6ff55e9415ae5a1a116ebd79fa18f"
+    },
+    {
       "title": "staking.withdrawal_v1",
       "redeemer": {
         "title": "_redeemer",
@@ -86,7 +123,7 @@
       "hash": "9330f75b7edd98279059a1897131a983a21ee475523700913701273f"
     },
     {
-      "title": "treasury.spending_v1",
+      "title": "treasury.spend_v1",
       "datum": {
         "title": "datum",
         "schema": {
@@ -114,6 +151,18 @@
     "Int": {
       "dataType": "integer"
     },
+    "List$aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
+      "dataType": "list",
+      "items": {
+        "$ref": "#/definitions/aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+      }
+    },
+    "List$common/types/SellingMarketplaceFeePart": {
+      "dataType": "list",
+      "items": {
+        "$ref": "#/definitions/common~1types~1SellingMarketplaceFeePart"
+      }
+    },
     "Option$aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
       "title": "Optional",
       "anyOf": [
@@ -125,6 +174,52 @@
           "fields": [
             {
               "$ref": "#/definitions/aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Option$common/types/Royalty": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/common~1types~1Royalty"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Option$common/types/WithdrawalMethod": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/common~1types~1WithdrawalMethod"
             }
           ]
         },
@@ -252,6 +347,99 @@
             {
               "title": "certificate_index",
               "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "common/types/InstantBuyDatum": {
+      "title": "InstantBuyDatum",
+      "anyOf": [
+        {
+          "title": "InstantBuyDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "seller_address",
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+            },
+            {
+              "title": "listing_marketplace_treasury",
+              "$ref": "#/definitions/common~1types~1WithdrawalMethod"
+            },
+            {
+              "title": "listing_affiliate_treasury",
+              "$ref": "#/definitions/Option$common~1types~1WithdrawalMethod"
+            },
+            {
+              "title": "asset_price",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "royalty",
+              "$ref": "#/definitions/Option$common~1types~1Royalty"
+            }
+          ]
+        }
+      ]
+    },
+    "common/types/InstantBuyRedeemer": {
+      "title": "InstantBuyRedeemer",
+      "anyOf": [
+        {
+          "title": "InstantBuyRedeemerBuy",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/List$common~1types~1SellingMarketplaceFeePart"
+            }
+          ]
+        },
+        {
+          "title": "InstantBuyRedeemerCancel",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "common/types/Royalty": {
+      "title": "Royalty",
+      "anyOf": [
+        {
+          "title": "Royalty",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "basis",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "treasury",
+              "$ref": "#/definitions/common~1types~1WithdrawalMethod"
+            }
+          ]
+        }
+      ]
+    },
+    "common/types/SellingMarketplaceFeePart": {
+      "title": "SellingMarketplaceFeePart",
+      "anyOf": [
+        {
+          "title": "SellingMarketplaceFeePart",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "portion",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "treasury",
+              "$ref": "#/definitions/common~1types~1WithdrawalMethod"
             }
           ]
         }

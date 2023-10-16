@@ -100,15 +100,38 @@ pub type Royalty {
   treasury: WithdrawalMethod,
 }
 
+pub type InstantBuyRedeemer {
+  InstantBuyRedeemerBuy(List<SellingMarketplaceFeePart>)
+  InstantBuyRedeemerCancel
+}
+
 pub type InstantBuyDatum {
-  sellectAddres: Address,
-  listingMarketplaceTreasury: WithdrawalMethod,
-  listingAffiliateTreasury: Option<WithdrawalMethod>,
-  assetPrice: Int,
+  seller_address: Address,
+  listing_marketplace_treasury: WithdrawalMethod,
+  listing_affiliate_treasury: Option<WithdrawalMethod>,
+  asset_price: Int,
   royalty: Option<Royalty>,
 }
 
-pub type InstantBuyRedeemer {
-  Buy(Option<SellingMarketplaceFeePart>)
-  Cancel
+test test_instant_buy_datum() {
+  let datum =
+    InstantBuyDatum {
+      seller_address: Address {
+        payment_credential: VerificationKeyCredential(
+          #"bd72b8c93f8d9b995c3381936fbc5166ba44bae685c5664fb22c401c",
+        ),
+        stake_credential: None,
+      },
+      listing_marketplace_treasury: TokenWithdrawalMethod(
+        Token {
+          policy: #"74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a",
+          count: 1,
+        },
+      ),
+      listing_affiliate_treasury: None,
+      asset_price: 10_000_000,
+      royalty: None,
+    }
+
+  cbor.diagnostic(datum) == @"121([_ 121([_ 121([_ h'BD72B8C93F8D9B995C3381936FBC5166BA44BAE685C5664FB22C401C']), 122([])]), 122([_ 121([_ h'74CE41370DD9103615C8399C51F47ECEE980467ECBFCFBEC5B59D09A', 1])]), 122([]), 10000000, 122([])])"
 }

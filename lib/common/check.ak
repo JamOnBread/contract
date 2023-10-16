@@ -105,3 +105,21 @@ pub fn transaction_is_validated(
       inputs_contains_tokens(context, token.policy, token.count)
   }
 }
+
+pub fn get_treasury_input_value(
+  inputs: List<transaction.Input>,
+  script_hash: Data,
+  stake_addresses: List<credential.StakeCredential>,
+  datum: types.WithdrawalMethod,
+) -> Int {
+  30
+}
+
+pub fn get_treasury_output_value(
+  inputs: List<transaction.Output>,
+  script_hash: Data,
+  stake_addresses: List<credential.StakeCredential>,
+  datum: types.WithdrawalMethod,
+) -> Int {
+  50
+}

@@ -13,17 +13,17 @@ lucid.selectWalletFromPrivateKey(privKey)
 const pool = "pool13m26ky08vz205232k20u8ft5nrg8u68klhn0xfsk9m4gsqsc44v"
 const stakeValidator = getCompiledCodeParams(
     'staking.withdrawal_v1', 
-    [encodeTreasuryDatumTokens("74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", 1n), 2n]
+    [encodeTreasuryDatumTokens("74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", 1n), 1n]
 )
 
 const stake = lucid.utils.validatorToScriptHash(stakeValidator)
 const stakeCred = lucid.utils.scriptHashToCredential(stake);
-console.log("StakeCred", stakeCred)
+console.log("StakeCred", stake, stakeCred)
 
 const reward = lucid.utils.credentialToRewardAddress(stakeCred)
 console.log("Reward", reward)
 
-
+/*
 const tx = await lucid.newTx()
     .registerStake(reward)
     .delegateTo(reward, pool, Data.void())
@@ -34,6 +34,8 @@ const tx = await lucid.newTx()
 const signedTx = await tx.sign().complete()
 const txHash = await signedTx.submit()
 console.log(txHash)
+*/
+
 
 /*
 const tx = await lucid.newTx()

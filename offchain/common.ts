@@ -26,17 +26,25 @@ export function getCompiledCode(title: string) : Script {
     }
 }
 
-
-export function getCompiledCodeParams(title: string, params: any) : Script {
-    console.log(params)
-    
+export function applyCodeParamas(code: Script, params: any) : Script {
     return {
         type: "PlutusV2",
         script: applyParamsToScript(
-            getCompiledCode(title).script,
+            code.script,
             params
         )
     }
+}
+
+export function getCompiledCodeParams(title: string, params: any) : Script {
+    return applyCodeParamas(getCompiledCode(title), params)
+}
+
+
+export function getRewardAddress(lucid: Lucid, stake: string) : string {
+    return lucid.utils.credentialToRewardAddress(
+        lucid.utils.scriptHashToCredential(stake)
+    )
 }
 
 export function encodeAddress(
