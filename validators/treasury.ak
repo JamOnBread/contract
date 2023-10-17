@@ -1,5 +1,5 @@
 use aiken/transaction.{ScriptContext}
-use common/check
+use common/method
 use common/types
 
 validator {
@@ -8,16 +8,16 @@ validator {
     _redeemer: Data,
     context: ScriptContext,
   ) -> Bool {
-    let credential = check.get_script_hash(context)
-    let validated = check.transaction_is_validated(context, datum)
+    let credential = method.get_script_hash(context)
+    let validated = method.transaction_is_validated(context, datum)
     let inputs =
-      check.number_inputs_address_datum(
+      method.number_inputs_address_datum(
         context.transaction.inputs,
         credential,
         datum,
       )
     let outputs =
-      check.number_outputs_address_datum(
+      method.number_outputs_address_datum(
         context.transaction.outputs,
         credential,
         datum,

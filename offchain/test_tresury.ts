@@ -48,7 +48,7 @@ const lucid = await Lucid.new(
 );
 lucid.selectWalletFromPrivateKey(privKey)
 
-const treasuryValidator = getCompiledCode("treasury.spending_v1")
+const treasuryValidator = getCompiledCode("treasury.spend_v1")
 const stakeValidator = getCompiledCodeParams(
     'staking.withdrawal_v1', 
     [encodeTreasuryDatumTokens("74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", 1n), 1n]
@@ -57,14 +57,14 @@ const stakeValidatorHash = lucid.utils.validatorToScriptHash(stakeValidator)
 const stakeCredential = lucid.utils.scriptHashToCredential(stakeValidatorHash)
 const address = lucid.utils.validatorToAddress(treasuryValidator, stakeCredential)
 console.log(address)
-/*
+
 let tx = await lucid.newTx()
 tx = await tx.payToContract(
     address,
     { inline: Data.to(encodeTreasuryDatumTokens("74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", 1n))},
     {lovelace: 5_000_000n}
 ).complete()
-*/
+
 
 /*
 const [utxo] = await lucid.utxosByOutRef([{
@@ -113,6 +113,7 @@ tx = await tx.complete()
 */
 
 
+/*
 const oldUtxo = Array.from(Array(8).keys()).map(n => {
     // 0c0001261e45b5d1ee357491fa6fd5a12acbc17a81739572c206b8e885485cb8
     return {
@@ -140,7 +141,7 @@ for(let utxo of utxos) {
     )    
 }
 tx = await tx.complete()
-
+*/
 
 
 //let tx = await lucid.newTx().payToAddress("addr_test1vr49pv7cpft4fekwg7atl4lv7fc839u72fkc9v39e0x3svcmytec9", {lovelace: 10_000_000n}).complete()

@@ -7,7 +7,6 @@ class JamOnBreadAdminV1 {
     private static numberOfToken = 1n
     private static treasuryScriptTitle = "treasury.spend_v1"
     private static instantBuyScriptTitle = "instant_buy.spend_v1"
-
     private static minimumAdaAmount = 2_000_000n
 
     private jamTokenPolicy: string = "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a"
@@ -15,8 +14,11 @@ class JamOnBreadAdminV1 {
     private jamStakes: string[]
     private lucid: Lucid
 
+
     private treasuryScript: Script
     private instantBuyScript: Script
+
+    private treasuryDatum: Constr<any>
 
     public static getTreasuryScript(): Script {
         return getCompiledCode(JamOnBreadAdminV1.treasuryScriptTitle)
@@ -63,10 +65,12 @@ class JamOnBreadAdminV1 {
                 this.createJobToken()
             ]
         )
+
+        this.treasuryDatum = this.createJobToken()
     }
 
-    public createJobToken(): PolicyId {
-        return encodeTreasuryDatumTokens(this.jamTokenPolicy, JamOnBreadAdminV1.numberOfToken)
+    public createJobToken(): Constr<any> {
+        return encodeTreasuryDatumTokens(this.jamTokenPolicy, BigInt(Math.floor(Number(JamOnBreadAdminV1.numberOfToken) / 2) + 1))
     }
 
     async payJoBToken(tx: Tx, amount: bigint): Tx {
@@ -82,7 +86,10 @@ class JamOnBreadAdminV1 {
         return getCompiledCode(JamOnBreadAdminV1.instantBuyScriptTitle)
     }
 
-    getTreasuryAddress(stake: number): string {
+    getTreasuryAddress(stakeId?: number): string {
+        if (typeof stakeId === "undefined")
+            stakeId = stakeId || Math.round(Math.random() * this.jamStakes.length)
+
         const paymentCredential = {
             type: "Script",
             hash: lucid.utils.validatorToScriptHash(this.treasuryScript)
@@ -90,11 +97,8 @@ class JamOnBreadAdminV1 {
 
         const stakeCredential = {
             type: "Script",
-            hash: this.jamStakes[stake]
+            hash: this.jamStakes[stakeId]
         } as Credential
-
-
-        console.log(paymentCredential, stakeCredential)
 
         return lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
     }
@@ -111,8 +115,9 @@ class JamOnBreadAdminV1 {
         }
     }
 
-    getInstantBuyAddress(): string {
-        const stakeId = Math.floor(Math.random() * this.jamStakes.length)
+    getInstantBuyAddress(stakeId?: number): string {
+        if (typeof stakeId === "undefined")
+            stakeId = stakeId || Math.round(Math.random() * this.jamStakes.length)
 
         const paymentCredential = {
             type: "Script",
@@ -129,16 +134,19 @@ class JamOnBreadAdminV1 {
 
     async getTreasuries(): Promise<UTxO[]> {
         const address = this.getTreasuryAddress(0)
-        console.log(address)
         return await this.lucid.utxosAt(address)
     }
 
     getTreasury(treasuries: UTxO[], datum: string): UTxO | undefined {
-        const index = treasuries.findIndex((value: UTxO) => value.datum == datum)
+        const index = treasuries.findIndex((value: UTxO) => {
+            console.log(value.datum, datum)
+            return value.datum == datum
+        })
 
         if (index > -1) {
             const element = treasuries[index]
-            treasuries.splice(index, 1)
+            // Removed splice
+            // treasuries.splice(index, 1)
             return element
         }
         return undefined
@@ -149,7 +157,13 @@ class JamOnBreadAdminV1 {
         const amount = datum.fields[3]
         const listing = Data.to(datum.fields[1])
         const beneficier_address = datum.fields[0].fields[0].fields[0]
-        const beneficier_stake = datum.fields[0].fields[1].fields[0].fields[0].fields[0]
+        const beneficier_stake = ((datum) => {
+            if(datum.fields[0].fields[1].constructor == 0) {
+                return datum.fields[0].fields[1].fields[0].fields[0].fields[0]
+            } else {
+                return undefined
+            }
+        }) (datum)
 
         const beneficier = lucid.utils.credentialToAddress(
             lucid.utils.keyHashToCredential(beneficier_address),
@@ -203,12 +217,16 @@ class JamOnBreadAdminV1 {
         }
     }
 
-    async instantBuyCancel(utxo: OutRef) {
-        const cancelRedeemer = Data.to(new Constr(1, []));
+    async instantBuyCancelTx(tx: Tx, utxo: OutRef): Promise<Tx> {
         const toSpend = await this.lucid.utxosByOutRef([utxo])
-        const txCancel = await this.lucid
-            .newTx()
-            .collectFrom(toSpend, cancelRedeemer)
+        tx = tx.collectFrom(toSpend, Data.to(new Constr(1, [])))
+        return tx
+    }
+
+    async instantBuyCancel(utxo: OutRef): Promise<string> {
+        let txCancel = this.lucid.newTx()
+        txCancel = await this.instantBuyCancelTx(txCancel, utxo)
+        txCancel = await txCancel
             .attachSpendingValidator(this.instantBuyScript)
             .addSigner(await lucid.wallet.address())
             .complete()
@@ -218,13 +236,105 @@ class JamOnBreadAdminV1 {
             .complete()
 
         const txHash = await signedTx.submit()
+        return txHash
+    }
+
+    async instantBuyProceed(utxo: OutRef, marketTreasury?: string) {
+
+        if (typeof marketTreasury == "undefined") {
+            marketTreasury = Data.to(this.treasuryDatum)
+        }
+
+        const [collectUtxo] = await this.lucid.utxosByOutRef([
+            utxo
+        ])
+
+        const treasuries = await this.getTreasuries()
+        console.log(marketTreasury)
+        console.log(treasuries)
+        const params = this.parseInstantbuyDatum(this.lucid, collectUtxo.datum!)
+        console.log(params)
+
+        const job = this.getTreasury(treasuries, Data.to(this.treasuryDatum))!
+        console.log(job)
+        const listing = this.getTreasury(treasuries, params.listing)!
+        const market = this.getTreasury(treasuries, marketTreasury!)!
+
+        const provision = 0.025 * Number(params.amount)
+        const payFeesRedeemer = Data.to(new Constr(0, []))
+        const buyRedeemer = Data.to(
+            new Constr(0, [
+                new Constr(0,
+                    [BigInt(10_000),
+                    Data.from(marketTreasury)
+                ])
+            ])
+        )
+
+        // JoB treasury
+        const collectFromTreasuries = {
+            [job!.datum!]: job
+        }
+        const payToTreasuries = {
+            [job!.datum!]: provision * 0.1
+        }
+
+        // Listing marketplace
+        if (listing!.datum! in collectFromTreasuries) {
+            payToTreasuries[listing!.datum!] += provision * 0.4
+        } else {
+            collectFromTreasuries[listing?.datum!] = listing
+            payToTreasuries[listing!.datum!] = provision * 0.4
+        }
+
+        // Selling marketplace
+        if (market!.datum! in collectFromTreasuries) {
+            payToTreasuries[market!.datum!] += provision * 0.5
+        } else {
+            payToTreasuries[market!.datum!] = provision * 0.5
+            collectFromTreasuries[market!.datum!] = market
+        }
+
+
+        let buildTx = this.lucid
+            .newTx()
+            .collectFrom(
+                Object.values(collectFromTreasuries),
+                payFeesRedeemer
+            )
+            .collectFrom(
+                [
+                    collectUtxo
+                ],
+                buyRedeemer
+            )
+            .attachSpendingValidator(this.treasuryScript)
+            .attachSpendingValidator(this.instantBuyScript)
+
+        for (let treasury of Object.values(collectFromTreasuries)) {
+            buildTx = buildTx.payToContract(
+                treasury.address,
+                { inline: treasury.datum! },
+                { lovelace: BigInt(treasury.assets.lovelace) + BigInt(payToTreasuries[treasury.datum!]) }
+            )
+        }
+
+
+        buildTx = buildTx.payToAddress(
+            params.beneficier,
+            { lovelace: params.amount + collectUtxo.assets.lovelace }
+        )
+            .addSigner(await lucid.wallet.address())
+
+        const tx = await buildTx.complete()
+        const signedTx = await tx.sign().complete()
+        const txHash = await signedTx.submit()
 
         return {
             txHash,
             outputIndex: 0
         }
     }
-
 
 }
 
@@ -240,10 +350,22 @@ lucid.selectWalletFromPrivateKey(privKey)
 const job = new JamOnBreadAdminV1(lucid, "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", "556e69717565")
 const unit = "eb029a3fc7fcb011f047011189eb0845b06c5b3d11506ee1dc659cea" + "4d794e4654"
 //console.log(await job.getTreasuries())
-//console.log(await job.instantbuyList(unit, 10_000_000n, "d87a9fd8799f581c74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a01ffff"))
+// console.log(await job.instantbuyList(unit, 10_000_000n, "d87a9fd8799f581c74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a01ffff"))
 
-
+/*
 console.log(await job.instantBuyCancel({
     txHash: "398620dd121fd5021b44a39ffbc9eae6d10be178a3407033fe5268dc8445e0c8",
     outputIndex: 0
 }))
+*/
+
+
+console.log(await job.instantBuyProceed(
+    {
+        txHash: "6e5ba4fc057c938dcd195fdf711d6d9999cb56cee7f01ac2930d8183641038f4",
+        outputIndex: 0
+    }
+))
+
+
+console.log(job.getTreasuryAddress(0))
