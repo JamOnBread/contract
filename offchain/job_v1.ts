@@ -1,6 +1,6 @@
 import { Lucid, Blockfrost, Script, Constr, Data, PolicyId, Unit, fromText, Tx, UTxO, OutRef, Credential } from "https://deno.land/x/lucid@0.10.7/mod.ts"
-import { getCompiledCodeParams, encodeTreasuryDatumTokens, getCompiledCode, encodeAddress, applyCodeParamas } from "./common.ts"
-import { InstantBuyDatumV1 } from "./types.ts"
+import { getCompiledCodeParams, encodeTreasuryDatumTokens, getCompiledCode, encodeAddress, applyCodeParamas, encodeTreasuryDatumAddress } from "./common.ts"
+import { InstantBuyDatumV1, Portion } from "./types.ts"
 
 class JamOnBreadAdminV1 {
     private static numberOfStakes = 10n
@@ -139,7 +139,6 @@ class JamOnBreadAdminV1 {
 
     getTreasury(treasuries: UTxO[], datum: string): UTxO | undefined {
         const index = treasuries.findIndex((value: UTxO) => {
-            console.log(value.datum, datum)
             return value.datum == datum
         })
 
@@ -152,43 +151,56 @@ class JamOnBreadAdminV1 {
         return undefined
     }
 
-    parseInstantbuyDatum(lucid: Lucid, datumString: string): InstantBuyDatumV1 {
-        const datum: Constr<any> = Data.from(datumString)
-        const amount = datum.fields[3]
-        const listing = Data.to(datum.fields[1])
-        const beneficier_address = datum.fields[0].fields[0].fields[0]
-        const beneficier_stake = ((datum) => {
-            if(datum.fields[0].fields[1].constructor == 0) {
-                return datum.fields[0].fields[1].fields[0].fields[0].fields[0]
-            } else {
-                return undefined
+    parseRoyalty(datum: Constr<any>) : Portion | undefined {
+        if(datum.index == 0) {
+            return {
+                percent: datum.fields[0].fields[0],
+                treasury: Data.to(datum.fields[0].fields[1])
             }
-        }) (datum)
-
-        const beneficier = lucid.utils.credentialToAddress(
-            lucid.utils.keyHashToCredential(beneficier_address),
-            beneficier_stake ? lucid.utils.keyHashToCredential(beneficier_stake) : undefined
-        )
-
-        return {
-            amount,
-            listing,
-            beneficier,
-
-            affiliate: undefined,
-            percent: undefined,
-            royalty: undefined
+        }else {
+            return undefined
         }
     }
 
-    async instantBuyListTx(tx: Tx, unit: Unit, price: bigint, listing: string, affiliate?: string, royalty?: string, percent?: number): Promise<Tx> {
+    parseInstantbuyDatum(datumString: string): InstantBuyDatumV1 {
+        const datum: Constr<any> = Data.from(datumString)
+        
+        const beneficier_address = datum.fields[0].fields[0].fields[0]
+        const beneficier_stake = datum.fields[0].fields[1].index == 0 ?
+            datum.fields[0].fields[1].fields[0].fields[0].fields[0]
+            :
+            undefined
+        const beneficier = this.lucid.utils.credentialToAddress(
+            this.lucid.utils.keyHashToCredential(beneficier_address),
+            beneficier_stake ? this.lucid.utils.keyHashToCredential(beneficier_stake) : undefined
+        )
+        const listingMarketDatum = Data.to(datum.fields[1])
+        console.log(datum.fields[2].index)
+        const listingAffiliateDatum = datum.fields[2].index == 0 ? Data.to(datum.fields[2].fields[0]) : listingMarketDatum
+        const amount = datum.fields[3]
+        const royalty = this.parseRoyalty(datum.fields[4])
+
+        return {
+            beneficier,
+            listingMarketDatum,
+            listingAffiliateDatum,
+            amount,
+            royalty
+        }
+    }
+
+    async instantBuyListTx(tx: Tx, unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<Tx> {
+        if (typeof listing == "undefined") {
+            listing = Data.to(this.treasuryDatum)
+        }
+
         const sellerAddr = await this.getEncodedAddress()
         const datum = new Constr(0, [
             sellerAddr,
             Data.from(listing),
             affiliate ? new Constr(0, [Data.from(affiliate)]) : new Constr(1, []),
             price,
-            royalty && percent ? new Constr(0, [new Constr(0, [BigInt(percent * 10_000), Data.from(royalty)])]) : new Constr(1, [])
+            royalty ? new Constr(0, [new Constr(0, [BigInt(Math.ceil(royalty.percent * 10_000)), Data.from(royalty.treasury)])]) : new Constr(1, [])
         ]);
 
         tx = tx.payToContract(
@@ -203,9 +215,9 @@ class JamOnBreadAdminV1 {
         return tx
     }
 
-    async instantbuyList(unit: Unit, price: bigint, listing: string, affiliate?: string, royalty?: string, percent?: number) {
+    async instantbuyList(unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion) {
         let tx = lucid.newTx()
-        tx = await this.instantBuyListTx(tx, unit, price, listing, affiliate, royalty, percent)
+        tx = await this.instantBuyListTx(tx, unit, price, listing, affiliate, royalty)
         tx = await tx.complete();
 
         const signedTx = await tx.sign().complete();
@@ -239,68 +251,64 @@ class JamOnBreadAdminV1 {
         return txHash
     }
 
-    async instantBuyProceed(utxo: OutRef, marketTreasury?: string) {
-
-        if (typeof marketTreasury == "undefined") {
-            marketTreasury = Data.to(this.treasuryDatum)
+    addToTreasuries(treasuries, datum, value) {
+        if(datum in treasuries) {
+            treasuries[datum] = treasuries[datum] + value
+        } else {
+            treasuries[datum] = value
         }
+    }
 
-        const [collectUtxo] = await this.lucid.utxosByOutRef([
+    async instantBuyProceed(utxo: OutRef, ...sellMarketPortions: Portion[]) {
+
+        const [collectUtxo] = await lucid.utxosByOutRef([
             utxo
         ])
 
-        const treasuries = await this.getTreasuries()
-        console.log(marketTreasury)
-        console.log(treasuries)
-        const params = this.parseInstantbuyDatum(this.lucid, collectUtxo.datum!)
-        console.log(params)
-
-        const job = this.getTreasury(treasuries, Data.to(this.treasuryDatum))!
-        console.log(job)
-        const listing = this.getTreasury(treasuries, params.listing)!
-        const market = this.getTreasury(treasuries, marketTreasury!)!
-
+        const params = this.parseInstantbuyDatum(collectUtxo.datum!)
         const provision = 0.025 * Number(params.amount)
-        const payFeesRedeemer = Data.to(new Constr(0, []))
-        const buyRedeemer = Data.to(
-            new Constr(0, [
+
+        console.log(params)
+        const payToTreasuries = {
+            [Data.to(this.treasuryDatum)]: provision * 0.1
+        }
+        this.addToTreasuries(payToTreasuries, params.listingMarketDatum, provision * 0.2)
+        this.addToTreasuries(payToTreasuries, params.listingAffiliateDatum, provision * 0.2)
+
+        for(let portion of sellMarketPortions) {
+            this.addToTreasuries(payToTreasuries, portion.treasury, provision * 0.5 * portion.percent)
+        }
+
+        if(params.royalty) {
+            this.addToTreasuries(payToTreasuries, params.royalty.treasury, params.amount * BigInt(params.royalty.percent) / 10_000n)
+        }
+
+        const buyRedeemer = Data.to(new Constr(0, [
+            sellMarketPortions.map(portion =>
                 new Constr(0,
-                    [BigInt(10_000),
-                    Data.from(marketTreasury)
-                ])
-            ])
-        )
+                    [
+                        BigInt(Math.ceil(portion.percent * 10_000)),
+                        Data.from(portion.treasury)
+                    ]
+                ), // selling marketplace
+            )]))
 
         // JoB treasury
-        const collectFromTreasuries = {
-            [job!.datum!]: job
-        }
-        const payToTreasuries = {
-            [job!.datum!]: provision * 0.1
-        }
-
-        // Listing marketplace
-        if (listing!.datum! in collectFromTreasuries) {
-            payToTreasuries[listing!.datum!] += provision * 0.4
-        } else {
-            collectFromTreasuries[listing?.datum!] = listing
-            payToTreasuries[listing!.datum!] = provision * 0.4
+        const allTreasuries = await this.getTreasuries()
+        const collectFromTreasuries = {}
+        
+        for(let datum in payToTreasuries) {
+            const treasuery = this.getTreasury(allTreasuries, datum)
+            collectFromTreasuries[datum] = treasuery
         }
 
-        // Selling marketplace
-        if (market!.datum! in collectFromTreasuries) {
-            payToTreasuries[market!.datum!] += provision * 0.5
-        } else {
-            payToTreasuries[market!.datum!] = provision * 0.5
-            collectFromTreasuries[market!.datum!] = market
-        }
-
+        console.log(payToTreasuries)
 
         let buildTx = this.lucid
             .newTx()
             .collectFrom(
                 Object.values(collectFromTreasuries),
-                payFeesRedeemer
+                Data.void()
             )
             .collectFrom(
                 [
@@ -311,20 +319,19 @@ class JamOnBreadAdminV1 {
             .attachSpendingValidator(this.treasuryScript)
             .attachSpendingValidator(this.instantBuyScript)
 
-        for (let treasury of Object.values(collectFromTreasuries)) {
+        for (let datum in collectFromTreasuries) {
+            const treasury = collectFromTreasuries[datum]
             buildTx = buildTx.payToContract(
                 treasury.address,
                 { inline: treasury.datum! },
-                { lovelace: BigInt(treasury.assets.lovelace) + BigInt(payToTreasuries[treasury.datum!]) }
+                { lovelace: BigInt(treasury.assets.lovelace) + BigInt(payToTreasuries[datum]) }
             )
         }
-
 
         buildTx = buildTx.payToAddress(
             params.beneficier,
             { lovelace: params.amount + collectUtxo.assets.lovelace }
-        )
-            .addSigner(await lucid.wallet.address())
+        )            
 
         const tx = await buildTx.complete()
         const signedTx = await tx.sign().complete()
@@ -342,7 +349,7 @@ const privKey = "ed25519_sk1z5zd4ap8nyyvlh2uz5rt08xh76yjhs0v7yv58vh00z399m3vrppq
 const lucid = await Lucid.new(
     new Blockfrost("https://cardano-preprod.blockfrost.io/api/v0", "preprodVm9mYgzOYXlfFrFYfgJ2Glz7AlnMjvV9"),
     "Preprod",
-);
+)
 lucid.selectWalletFromPrivateKey(privKey)
 
 
@@ -350,11 +357,32 @@ lucid.selectWalletFromPrivateKey(privKey)
 const job = new JamOnBreadAdminV1(lucid, "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", "556e69717565")
 const unit = "eb029a3fc7fcb011f047011189eb0845b06c5b3d11506ee1dc659cea" + "4d794e4654"
 //console.log(await job.getTreasuries())
-// console.log(await job.instantbuyList(unit, 10_000_000n, "d87a9fd8799f581c74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a01ffff"))
+
+
+
+/*
+console.log(
+    await job.instantbuyList(
+        unit, 
+        10_000_000n, 
+        Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vp54hwj38ykwyvek6vdkug6flwrdtwuazqlwuqngzw5deks388fd7").hash
+        )),
+        Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vry4ww84sje8lmvw35glqgkdt6ahzdz04x8yqkfmpt5t3xcrve047").hash
+        )),
+        {percent: 0.1, treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vrelgt8camtmzktcykamyh8rgpq5sutueeawpzwykwpdujq05epfh").hash
+        ))} as Portion
+    )
+)
+*/
+
+
 
 /*
 console.log(await job.instantBuyCancel({
-    txHash: "398620dd121fd5021b44a39ffbc9eae6d10be178a3407033fe5268dc8445e0c8",
+    txHash: "c4464fd4c4e2083c037a8d89e22235104c6f95eee9b076b1527a35cfa0367481",
     outputIndex: 0
 }))
 */
@@ -362,10 +390,72 @@ console.log(await job.instantBuyCancel({
 
 console.log(await job.instantBuyProceed(
     {
-        txHash: "6e5ba4fc057c938dcd195fdf711d6d9999cb56cee7f01ac2930d8183641038f4",
+        txHash: "1ff304d8c27f4969e6ef7cfa347c5a549e99401f1625f748f13351b899546f5c",
         outputIndex: 0
-    }
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vz6r5aetvn6m6y8lax7zlx9dl7hnfm53q4njwzdcyzqmzdct4jjws").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vz695rlavrxv8wm2r7ur6skp5f3gtkx3xsqk20gpvest92qd42p39").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vr0yzzjnsnxpkf48n56s5jp06df2tx4dylch7j2zwm0tnrcwrmc4c").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vqrmaa655rtcxu5lg9nd7tph6wxzq5su646nmweuh798ayqa4z4hc").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vplh9cjn8vhmzn7qs8ynv7aea3t567a9w4lagetrf896q3q0xamca").hash
+        ))
+    },
+    /*
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vr6v0wmlzs8xashkqdpm9k47l0q9aek0mucef273ky2xuhcfwqj92").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vqxzql8rxfxefdzjz9t6rdnly0lrffcngk9wy29c6l6j7sss5m2p6").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vr49pv7cpft4fekwg7atl4lv7fc839u72fkc9v39e0x3svcmytec9").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vqcg5dsaz9kq8n7nj8kpkr8yvpst3me4qzpzpcwkh8sexhc7n5pm7").hash
+        ))
+    },
+    {
+        percent: 0.1,
+        treasury: Data.to(encodeTreasuryDatumAddress(
+            lucid.utils.paymentCredentialOf("addr_test1vrhvvu6kn96f05ucldwlmdg46djdrerrat4qqc28xaj44kcz8j4sd").hash
+        ))
+    }*/
 ))
 
 
-console.log(job.getTreasuryAddress(0))
+
+// console.log(job.getTreasuryAddress(0))

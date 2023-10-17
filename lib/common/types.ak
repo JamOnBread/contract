@@ -115,7 +115,7 @@ pub type Royalty {
 }
 
 pub type InstantBuyRedeemer {
-  InstantBuyRedeemerBuy(SellingMarketplaceFeePart)
+  InstantBuyRedeemerBuy(List<SellingMarketplaceFeePart>)
   InstantBuyRedeemerCancel
 }
 
@@ -127,7 +127,7 @@ pub type InstantBuyDatum {
   royalty: Option<Royalty>,
 }
 
-test test_instant_buy_datum() {
+test test_instant_buy_datum_1() {
   let datum =
     InstantBuyDatum {
       seller_address: Address {
@@ -147,5 +147,39 @@ test test_instant_buy_datum() {
       royalty: None,
     }
 
-  cbor.diagnostic(datum) == @"121([_ 121([_ 121([_ h'BD72B8C93F8D9B995C3381936FBC5166BA44BAE685C5664FB22C401C']), 122([])]), 122([_ 121([_ h'74CE41370DD9103615C8399C51F47ECEE980467ECBFCFBEC5B59D09A', 1])]), 122([]), 10000000, 122([])])"
+  (cbor.serialise(datum) == #"d8799fd8799fd8799f581cbd72b8c93f8d9b995c3381936fbc5166ba44bae685c5664fb22c401cffd87a80ffd87a9fd8799f581c74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a01ffffd87a801a00989680d87a80ff")?
+}
+
+test test_instant_buy_datum_2() {
+  let datum =
+    InstantBuyDatum {
+      seller_address: Address {
+        payment_credential: VerificationKeyCredential(
+          #"bd72b8c93f8d9b995c3381936fbc5166ba44bae685c5664fb22c401c",
+        ),
+        stake_credential: None,
+      },
+      listing_marketplace_treasury: AddressWithdrawalMethod(
+        Address {
+          payment_credential: VerificationKeyCredential(
+            #"695bba51392ce23336d31b6e2349fb86d5bb9d103eee026813a8dcda",
+          ),
+          stake_credential: None,
+        },
+      ),
+      listing_affiliate_treasury: Some(
+        AddressWithdrawalMethod(
+          Address {
+            payment_credential: VerificationKeyCredential(
+              #"c95738f584b27fed8e8d11f022cd5ebb71344fa98e40593b0ae8b89b",
+            ),
+            stake_credential: None,
+          },
+        ),
+      ),
+      asset_price: 10_000_000,
+      royalty: None,
+    }
+
+  (cbor.serialise(datum) == #"d8799fd8799fd8799f581cbd72b8c93f8d9b995c3381936fbc5166ba44bae685c5664fb22c401cffd87a80ffd8799fd8799fd8799f581c695bba51392ce23336d31b6e2349fb86d5bb9d103eee026813a8dcdaffd87a80ffffd8799fd8799fd8799fd8799f581cc95738f584b27fed8e8d11f022cd5ebb71344fa98e40593b0ae8b89bffd87a80ffffff1a00989680d87a80ff")?
 }

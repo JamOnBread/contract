@@ -258,7 +258,9 @@ pub fn provision_add_portion(
         provision_add(
           self,
           x.treasury,
-          provision_base * x.portion / constant.fixed_decimals,
+          provision_base * (
+            constant.selling_marketplace_portion * x.portion / constant.fixed_decimals
+          ) / constant.fixed_decimals,
         ),
         provision_base,
         xs,
@@ -361,7 +363,8 @@ pub fn check_portions(
 ) -> Bool {
   when portions is {
     [] -> True
-    [x] -> (sum + x.portion <= constant.selling_marketplace_portion)?
+    [x] -> (sum + x.portion <= constant.fixed_decimals)?
+    // Fixed decimal = 100%
     [x, ..xs] -> check_portions(xs, sum + x.portion)
   }
 }
@@ -376,10 +379,10 @@ test test_check_portions() {
     [types.SellingMarketplaceFeePart { portion: 2_000, treasury }, ..portions_1]
 
   let portions_3 =
-    [types.SellingMarketplaceFeePart { portion: 2_000, treasury }, ..portions_2]
+    [types.SellingMarketplaceFeePart { portion: 3_000, treasury }, ..portions_2]
 
   let portions_4 =
-    [types.SellingMarketplaceFeePart { portion: 1_000, treasury }, ..portions_3]
+    [types.SellingMarketplaceFeePart { portion: 5_000, treasury }, ..portions_3]
 
   check_portions(portions_1, 0)? && check_portions(portions_2, 0)? && check_portions(
     portions_3,

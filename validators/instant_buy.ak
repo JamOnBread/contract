@@ -18,111 +18,124 @@ validator(
     redeemer: types.InstantBuyRedeemer,
     context: transaction.ScriptContext,
   ) -> Bool {
-    when redeemer is {
-      // When canceling listing
-      types.InstantBuyRedeemerCancel ->
-        when datum.seller_address.payment_credential is {
-          credential.VerificationKeyCredential(credential) ->
-            method.transaction_is_signed(context, credential)
-          _ -> False
-        }
-      types.InstantBuyRedeemerBuy(selling_marketplace) -> {
-        let provision_base =
-          datum.asset_price * constant.fees_basis / constant.fixed_decimals
-
-        let provisions =
-          []
-            |> method.provision_add(
-                 // Add JoB treasury by default
-                 job,
-                 provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals,
-               )
-            |> method.provision_add(
-                 // Add Listing marketplace treasury
-                 datum.listing_marketplace_treasury,
-                 provision_base * constant.listing_marketplace_portion / constant.fixed_decimals,
-               )
-            |> method.provision_add(
-                 // Add Listing affiliate or listing market place treasury
-                 option.or_else(
-                   datum.listing_affiliate_treasury,
-                   datum.listing_marketplace_treasury,
-                 ),
-                 provision_base * constant.listing_affiliate_portion / constant.fixed_decimals,
-               )
-            |> method.provision_add(
-                 // Add sell marketplace treasury
-                 selling_marketplace.treasury,
-                 provision_base * (
-                   selling_marketplace.portion * constant.selling_marketplace_portion / constant.fixed_decimals
-                 ) / constant.fixed_decimals,
-               )
-
-        // Add royalty if defined
-        let (provisions, final_price) =
-          when datum.royalty is {
-            Some(royalty) -> {
-              let provision =
-                datum.asset_price * royalty.portion / constant.fixed_decimals
-
-              when royalty.treasury is {
-                types.AddressWithdrawalMethod(credential.Address(
-                  payment_credential,
-                  ..,
-                )) ->
-                  if
-                  payment_credential == datum.seller_address.payment_credential{
-                  
-                    (provisions, datum.asset_price)
-                  } else {
-                    (
-                      method.provision_add(
-                        provisions,
-                        royalty.treasury,
-                        provision,
-                      ),
-                      datum.asset_price - provision,
-                    )
-                  }
-                _other ->
-                  (
-                    method.provision_add(
-                      provisions,
-                      royalty.treasury,
-                      provision,
-                    ),
-                    datum.asset_price - provision,
-                  )
-              }
+    // Purpose must be spend
+    when context.purpose is {
+      transaction.Spend(output_reference) -> {
+        // Get transaction input
+        expect Some(transaction.Input { output: input, .. }) =
+          transaction.find_input(context.transaction.inputs, output_reference)
+        when redeemer is {
+          // When canceling listing
+          types.InstantBuyRedeemerCancel ->
+            when datum.seller_address.payment_credential is {
+              credential.VerificationKeyCredential(credential) ->
+                method.transaction_is_signed(context, credential)
+              _ -> False
             }
-            None -> (provisions, datum.asset_price)
-          }
 
-        (datum.asset_price > 0)? && selling_marketplace.portion <= constant.fixed_decimals && method.check_all_provisions(
-          provisions,
-          context.transaction,
-          treasury_script_hash,
-          stake_addresses,
-        )? && method.check_required_paymnet(
-          context.transaction.outputs,
-          datum.seller_address,
-          value.ada_policy_id,
-          value.ada_asset_name,
-          final_price,
-        )?
+          // When buying instantbuy
+          types.InstantBuyRedeemerBuy(selling_marketplace_portions) -> {
+            let provision_base =
+              datum.asset_price * constant.fees_basis / constant.fixed_decimals
+
+            let provisions =
+              []
+                |> method.provision_add(
+                     // Add JoB treasury by default
+                     job,
+                     provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals,
+                   )
+                |> method.provision_add(
+                     // Add Listing marketplace treasury
+                     datum.listing_marketplace_treasury,
+                     provision_base * constant.listing_marketplace_portion / constant.fixed_decimals,
+                   )
+                |> method.provision_add(
+                     // Add Listing affiliate or listing market place treasury
+                     option.or_else(
+                       datum.listing_affiliate_treasury,
+                       datum.listing_marketplace_treasury,
+                     ),
+                     provision_base * constant.listing_affiliate_portion / constant.fixed_decimals,
+                   )
+                |> method.provision_add_portion(
+                     // Add Sell marketplace treasuries
+                     provision_base,
+                     selling_marketplace_portions,
+                   )
+
+            // Add royalty if defined
+            let (provisions, final_price) =
+              when datum.royalty is {
+                Some(royalty) -> {
+                  let provision =
+                    datum.asset_price * royalty.portion / constant.fixed_decimals
+
+                  when royalty.treasury is {
+                    types.AddressWithdrawalMethod(credential.Address(
+                      payment_credential,
+                      ..,
+                    )) ->
+                      // If royalty match seller address, stake part can be ommited in treasury
+                      if
+                      payment_credential == datum.seller_address.payment_credential{
+                      
+                        (provisions, datum.asset_price)
+                      } else {
+                        (
+                          method.provision_add(
+                            provisions,
+                            royalty.treasury,
+                            provision,
+                          ),
+                          datum.asset_price - provision,
+                        )
+                      }
+                    _other ->
+                      (
+                        method.provision_add(
+                          provisions,
+                          royalty.treasury,
+                          provision,
+                        ),
+                        datum.asset_price - provision,
+                      )
+                  }
+                }
+                None -> (provisions, datum.asset_price)
+              }
+
+            (datum.asset_price > 0)? && method.check_portions(
+              selling_marketplace_portions,
+              0,
+            ) && method.check_all_provisions(
+              provisions,
+              context.transaction,
+              treasury_script_hash,
+              stake_addresses,
+            )? && method.check_required_paymnet(
+              context.transaction.outputs,
+              datum.seller_address,
+              value.ada_policy_id,
+              value.ada_asset_name,
+              // Need to return original locked ADA to owner
+              final_price + value.lovelace_of(input.value),
+            )?
+          }
+        }
       }
+      _other_purpose -> False
     }
   }
 }
-
-test test__multiply_rounding() {
-  let provision =
-    100_000_000_000_000_000_000_000_000 * 10_000 * constant.selling_marketplace_portion / (
-      constant.fixed_decimals * constant.fixed_decimals
-    )
-
-  provision == 50_000_000_000_000_000_000_000_000
-}
+/// test test__multiply_rounding() {
+///   let provision =
+///     100_000_000_000_000_000_000_000_000 * 10_000 * constant.selling_marketplace_portion / (
+///       constant.fixed_decimals * constant.fixed_decimals
+///     )
+/// 
+///   provision == 50_000_000_000_000_000_000_000_000
+/// }
 ///  let provisions = 
 ///    dict.new()
 ///    // Add JoB provision
