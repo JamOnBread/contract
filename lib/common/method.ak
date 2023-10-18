@@ -174,7 +174,7 @@ pub fn get_number_inputs_ada_by_address_datum(
   )
 }
 
-pub fn transaction_is_signed(
+pub fn check_transaction_is_signed(
   context: transaction.ScriptContext,
   owner: Hash<Blake2b_224, VerificationKey>,
 ) -> Bool {
@@ -182,7 +182,7 @@ pub fn transaction_is_signed(
 }
 
 /// Check, if required amount of asset are present in transaction inputs
-pub fn inputs_contains_tokens(
+pub fn check_inputs_contains_tokens(
   context: transaction.ScriptContext,
   policy_id: value.PolicyId,
   number: Int,
@@ -198,7 +198,7 @@ pub fn inputs_contains_tokens(
 /// There is two kinds of validation:
 /// 1. Payment credential
 /// 2. With number of assets with correct PolicyId
-pub fn transaction_is_validated(
+pub fn check_transaction_is_validated(
   context: transaction.ScriptContext,
   datum: types.WithdrawalMethod,
 ) -> Bool {
@@ -206,11 +206,11 @@ pub fn transaction_is_validated(
     types.AddressWithdrawalMethod(Address { payment_credential, .. }) ->
       when payment_credential is {
         VerificationKeyCredential(credential) ->
-          transaction_is_signed(context, credential)
+          check_transaction_is_signed(context, credential)
         _ -> False
       }
     types.TokenWithdrawalMethod(token) ->
-      inputs_contains_tokens(context, token.policy, token.count)
+      check_inputs_contains_tokens(context, token.policy, token.count)
   }
 }
 

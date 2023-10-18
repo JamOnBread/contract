@@ -55,7 +55,7 @@ validator {
           )
 
         // If the transaction is autorized, we can withraw same number of treasuries like output, or we can reduce it to minimal number
-        method.transaction_is_validated(context, datum)? && ((outputs >= constant.minimal_number_treasuries)? || (outputs == inputs)?)?
+        method.check_transaction_is_validated(context, datum)? && ((outputs >= constant.minimal_number_treasuries)? || (outputs == inputs)?)?
       }
     }
   }

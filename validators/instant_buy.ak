@@ -34,7 +34,7 @@ validator(
           Cancel ->
             when datum.seller_address.payment_credential is {
               credential.VerificationKeyCredential(credential) ->
-                method.transaction_is_signed(context, credential)
+                method.check_transaction_is_signed(context, credential)
               _ -> False
             }
 

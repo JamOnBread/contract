@@ -35,7 +35,7 @@ validator(
           Cancel ->
             when datum.offerer_address.payment_credential is {
               credential.VerificationKeyCredential(credential) ->
-                method.transaction_is_signed(context, credential)
+                method.check_transaction_is_signed(context, credential)
               _ -> False
             }
           Accept(selling_marketplace_portions) -> {
