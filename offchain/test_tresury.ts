@@ -15,6 +15,7 @@ const keyList = [
     "ed25519_sk1u99hfqz70237sxsh2eg5nxyw7p8qehqtrxl9ll4rfzrzrfpwqglsw6flxn",
     "ed25519_sk199jt0t7ad8vp0l5qwjqadl73vg8ygagssnn7ecudeh6supjhsmdsz0s8fd",
     "ed25519_sk1nugkm42afqtjwzxgw70xv4zkuyk8amp5q633sc8w34u4dc3r7xnsezgl9x", // 10
+    /*
     "ed25519_sk1dz6frupmeynvky98gy9qdmh8m8rm7amqtd36nlf3gqe87k605a0qd7pwtl",
     "ed25519_sk1qce3v42x0gwx4cpncrpcw59sseuf5fgt2pmtqq6hykx32zld5vhst9xpak",
     "ed25519_sk1xjy49xevfmn792f40emqkvsrne95tpfmes2mc0g7c5yek8yplwzsgr3pj5",
@@ -29,7 +30,7 @@ const keyList = [
     "ed25519_sk1uepnzwjhswg03tzsux5h5shamx34ry9g9fknukjmncr65gmxkwysudz6dz",
     "ed25519_sk1dfvp03ns0xqgzsvw3wwe5nr5a3j974s3kd4l88erv6adrmlzyzcqrnxhvj",
     "ed25519_sk1vs8wxc0hzz6g97ty8ghafdm78kaa62vmpdmg78swe6l5nlpgp82splav0w",
-    "ed25519_sk1txrnrqlh5pajzjytexyvl72gfgsd3d4uj25ph5pwdtd7at8p97ks50lmym"
+    "ed25519_sk1txrnrqlh5pajzjytexyvl72gfgsd3d4uj25ph5pwdtd7at8p97ks50lmym"*/
 ]
 const walletList = await Promise.all(keyList.map(async (privKey) => {
     const lucid = await Lucid.new(
@@ -60,13 +61,12 @@ console.log(address)
 
 let tx = await lucid.newTx()
 
-/*
+
 tx = await tx.payToContract(
     address,
     { inline: Data.to(encodeTreasuryDatumTokens("74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", 1n))},
     {lovelace: 5_000_000n}
-).complete()
-*/
+)
 
 /*
 const [utxo] = await lucid.utxosByOutRef([{
@@ -111,7 +111,6 @@ for(const wallet of walletList) {
         {lovelace: 2_000_100n}
     )
 }
-tx = await tx.complete()
 
 
 
@@ -163,8 +162,7 @@ let tx = await walletList[10]
     .complete()
 */
 
-/*
+tx = await tx.complete()
 const signedTx = await tx.sign().complete()
 const txHash = await signedTx.submit()
 console.log(txHash)
-*/

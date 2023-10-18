@@ -390,9 +390,11 @@ lucid.selectWalletFromPrivateKey(privKey)
 
 
 const job = new JamOnBreadAdminV1(lucid, "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", "556e69717565")
-const unit = "eb029a3fc7fcb011f047011189eb0845b06c5b3d11506ee1dc659cea" + "4d794e4654"
+const unit = "b1ecd813e9084e3592d0986c41b63197fe2eb8e8994c4269933f8363" + "4a6f42566572696669636174696f6e"
 // console.log(await job.getTreasuries())
 // console.log(await job.squashNft())
+console.log(await lucid.wallet.address())
+
 
 /*
 console.log(
@@ -414,7 +416,7 @@ console.log(
 
 /*
 console.log(await job.instantBuyCancel({
-    txHash: "c4464fd4c4e2083c037a8d89e22235104c6f95eee9b076b1527a35cfa0367481",
+    txHash: "36f3c3105e00319629bf922e69677360a51629079882e16028cd7dc781eeb183",
     outputIndex: 0
 }))
 */
@@ -422,7 +424,7 @@ console.log(await job.instantBuyCancel({
 
 console.log(await job.instantBuyProceed(
     {
-        txHash: "f8bb191e330a380f9ebb0846f522a996c0f87431738cd29257b5a07994f34dd4",
+        txHash: "b111d210134930433a81b0bc8b1348a96d54c4c8ea19ffcbda03e2909fb42cda",
         outputIndex: 0
     },
     {
@@ -460,13 +462,13 @@ console.log(await job.instantBuyProceed(
         treasury: Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vr6v0wmlzs8xashkqdpm9k47l0q9aek0mucef273ky2xuhcfwqj92").hash
         ))
-    },
+    },/*
     {
         percent: 0.1,
         treasury: Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vqxzql8rxfxefdzjz9t6rdnly0lrffcngk9wy29c6l6j7sss5m2p6").hash
         ))
-    },
+    },/*
     {
         percent: 0.1,
         treasury: Data.to(encodeTreasuryDatumAddress(
@@ -486,7 +488,6 @@ console.log(await job.instantBuyProceed(
         ))
     }*/
 ))
-
 
 
 // console.log(job.getTreasuryAddress(0))

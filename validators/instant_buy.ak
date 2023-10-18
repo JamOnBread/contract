@@ -1,5 +1,6 @@
 //use aiken/cbor
 use aiken/hash.{Blake2b_224, Hash}
+use aiken/math.{max}
 use aiken/option
 use aiken/transaction
 use aiken/transaction/credential
@@ -43,7 +44,10 @@ validator(
                 |> method.provision_add(
                      // Add JoB treasury by default
                      job,
-                     provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals,
+                     max(
+                       provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals,
+                       constant.minimal_job_reward,
+                     ),
                    )
                 |> method.provision_add(
                      // Add Listing marketplace treasury
@@ -80,7 +84,8 @@ validator(
                       if
                       payment_credential == datum.seller_address.payment_credential{
                       
-                        (provisions, datum.asset_price)
+                        // Price - provisions (royalty is included in price)
+                        (provisions, datum.asset_price - provision_base)
                       } else {
                         (
                           method.provision_add(
@@ -88,7 +93,8 @@ validator(
                             royalty.treasury,
                             provision,
                           ),
-                          datum.asset_price - provision,
+                          // Price - royalty - provisions
+                          datum.asset_price - provision - provision_base,
                         )
                       }
                     _other ->
@@ -98,14 +104,15 @@ validator(
                           royalty.treasury,
                           provision,
                         ),
-                        datum.asset_price - provision,
+                        // Price - royalty - provisions
+                        datum.asset_price - provision - provision_base,
                       )
                   }
                 }
                 None -> (provisions, datum.asset_price)
               }
 
-            (datum.asset_price > 0)? && method.check_portions(
+            (datum.asset_price > constant.minimal_contract_price)? && method.check_portions(
               selling_marketplace_portions,
               0,
             ) && method.check_all_provisions(
@@ -113,7 +120,7 @@ validator(
               context.transaction,
               treasury_script_hash,
               stake_addresses,
-            )? && method.check_required_paymnet(
+            )? && method.check_required_payment(
               context.transaction.outputs,
               datum.seller_address,
               value.ada_policy_id,

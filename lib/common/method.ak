@@ -28,6 +28,32 @@ pub fn get_script_hash(context: transaction.ScriptContext) -> Credential {
   get_script_address(context).payment_credential
 }
 
+pub fn get_number_outputs_by_address_datum(
+  outputs: List<transaction.Output>,
+  address: Address,
+  datum: Data,
+) -> Int {
+  list.foldr(
+    outputs,
+    0,
+    fn(output, total) {
+      if
+      output.address == address && output.datum == transaction.InlineDatum(
+        datum,
+      ){
+      
+        if value.lovelace_of(output.value) < constant.min_ada_value {
+          fail @"There is no minimal ada on Output"
+        } else {
+          total + 1
+        }
+      } else {
+        total
+      }
+    },
+  )
+}
+
 pub fn number_outputs_hash_datum(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
@@ -55,7 +81,7 @@ pub fn number_outputs_hash_datum(
   )
 }
 
-pub fn number_outputs_address_datum(
+pub fn get_number_outputs_ada_by_address_datum(
   outputs: List<transaction.Output>,
   address: Address,
   datum: Data,
@@ -82,7 +108,29 @@ pub fn number_outputs_address_datum(
   )
 }
 
-pub fn number_inputs_hash_datum(
+pub fn get_number_inputs_by_address_datum(
+  inputs: List<transaction.Input>,
+  address: Address,
+  datum: Data,
+) -> Int {
+  list.foldr(
+    inputs,
+    0,
+    fn(input, total) {
+      if
+      input.output.address == address && input.output.datum == transaction.InlineDatum(
+        datum,
+      ){
+      
+        total + 1
+      } else {
+        total
+      }
+    },
+  )
+}
+
+pub fn get_number_inputs_ada_by_credential_datum(
   inputs: List<transaction.Input>,
   payment_credential: Credential,
   datum: Data,
@@ -104,7 +152,7 @@ pub fn number_inputs_hash_datum(
   )
 }
 
-pub fn number_inputs_address_datum(
+pub fn get_number_inputs_ada_by_address_datum(
   inputs: List<transaction.Input>,
   address: Address,
   datum: Data,
@@ -166,6 +214,7 @@ pub fn transaction_is_validated(
   }
 }
 
+/// 
 pub fn get_treasury_input_value(
   inputs: List<transaction.Input>,
   script_hash: Hash<Blake2b_224, credential.Script>,
@@ -175,15 +224,17 @@ pub fn get_treasury_input_value(
   when
     list.find(
       inputs,
-      fn(i) {
-        check_treasury_address(i.output.address, script_hash, stake_addresses) && i.output.datum == transaction.InlineDatum(
-          datum,
-        )
+      fn(input) {
+        check_treasury_address(
+          input.output.address,
+          script_hash,
+          stake_addresses,
+        ) && input.output.datum == transaction.InlineDatum(datum)
       },
     )
   is {
     Some(input) -> value.lovelace_of(input.output.value)
-    None -> 0
+    _other -> 0
   }
 }
 
@@ -193,16 +244,45 @@ pub fn get_treasury_output_value(
   stake_addresses: List<credential.StakeCredential>,
   datum: types.WithdrawalMethod,
 ) -> Int {
-  expect Some(output) =
+  when
     list.find(
       outputs,
-      fn(o) {
-        check_treasury_address(o.address, script_hash, stake_addresses) && o.datum == transaction.InlineDatum(
+      fn(output) {
+        check_treasury_address(output.address, script_hash, stake_addresses) && output.datum == transaction.InlineDatum(
           datum,
         )
       },
     )
-  value.lovelace_of(output.value)
+  is {
+    Some(output) -> value.lovelace_of(output.value)
+    _other -> 0
+  }
+}
+
+pub fn check_treasury_input_datum_unique(
+  inputs: List<transaction.Input>,
+  payment_credential: Credential,
+) -> Bool {
+  when inputs is {
+    [x, ..xs] ->
+      if x.output.address.payment_credential == payment_credential {
+        if
+        list.find(
+          xs,
+          fn(input) {
+            x.output.datum == input.output.datum && input.output.address.payment_credential == payment_credential
+          },
+        ) == None{
+        
+          check_treasury_input_datum_unique(xs, payment_credential)
+        } else {
+          False
+        }
+      } else {
+        check_treasury_input_datum_unique(xs, payment_credential)
+      }
+    _other -> True
+  }
 }
 
 pub fn check_treasury_address(
@@ -265,7 +345,7 @@ pub fn check_all_provisions(
   )
 }
 
-pub fn check_required_paymnet(
+pub fn check_required_payment(
   outputs: List<transaction.Output>,
   address: credential.Address,
   policy_id: value.PolicyId,
