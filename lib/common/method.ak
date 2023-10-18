@@ -16,15 +16,19 @@ pub fn policy_id_of(values: value.Value, policy_id: value.PolicyId) -> Int {
     |> dict.foldr(0, fn(_, v, r) { v + r })
 }
 
-pub fn get_script_hash(context: transaction.ScriptContext) -> Credential {
+pub fn get_script_address(context: transaction.ScriptContext) -> Address {
   expect transaction.Spend(output_reference) = context.purpose
   expect Some(input) =
     transaction.find_input(context.transaction.inputs, output_reference)
 
-  input.output.address.payment_credential
+  input.output.address
 }
 
-pub fn number_outputs_address_datum(
+pub fn get_script_hash(context: transaction.ScriptContext) -> Credential {
+  get_script_address(context).payment_credential
+}
+
+pub fn number_outputs_hash_datum(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
   datum: Data,
@@ -51,7 +55,34 @@ pub fn number_outputs_address_datum(
   )
 }
 
-pub fn number_inputs_address_datum(
+pub fn number_outputs_address_datum(
+  outputs: List<transaction.Output>,
+  address: Address,
+  datum: Data,
+) -> (Int, Int) {
+  list.foldr(
+    outputs,
+    (0, 0),
+    fn(output, acc) {
+      if
+      output.address == address && output.datum == transaction.InlineDatum(
+        datum,
+      ){
+      
+        let amount = value.lovelace_of(output.value)
+        if amount < constant.min_ada_value {
+          fail @"There is no minimal ada on Output"
+        } else {
+          (acc.1st + 1, acc.2nd + amount)
+        }
+      } else {
+        acc
+      }
+    },
+  )
+}
+
+pub fn number_inputs_hash_datum(
   inputs: List<transaction.Input>,
   payment_credential: Credential,
   datum: Data,
@@ -62,6 +93,28 @@ pub fn number_inputs_address_datum(
     fn(input, acc) {
       if
       input.output.address.payment_credential == payment_credential && input.output.datum == transaction.InlineDatum(
+        datum,
+      ){
+      
+        (acc.1st + 1, acc.2nd + value.lovelace_of(input.output.value))
+      } else {
+        acc
+      }
+    },
+  )
+}
+
+pub fn number_inputs_address_datum(
+  inputs: List<transaction.Input>,
+  address: Address,
+  datum: Data,
+) -> (Int, Int) {
+  list.foldr(
+    inputs,
+    (0, 0),
+    fn(input, acc) {
+      if
+      input.output.address == address && input.output.datum == transaction.InlineDatum(
         datum,
       ){
       
@@ -119,7 +172,7 @@ pub fn get_treasury_input_value(
   stake_addresses: List<credential.StakeCredential>,
   datum: Data,
 ) -> Int {
-  expect Some(input) =
+  when
     list.find(
       inputs,
       fn(i) {
@@ -128,8 +181,10 @@ pub fn get_treasury_input_value(
         )
       },
     )
-
-  value.lovelace_of(input.output.value)
+  is {
+    Some(input) -> value.lovelace_of(input.output.value)
+    None -> 0
+  }
 }
 
 pub fn get_treasury_output_value(

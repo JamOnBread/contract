@@ -11,3 +11,5 @@ pub const listing_marketplace_portion: Int = 2_000
 pub const listing_affiliate_portion: Int = 2_000
 
 pub const selling_marketplace_portion: Int = 5_000
+
+pub const minimal_number_treasuries: Int = 5

@@ -82,6 +82,40 @@ class JamOnBreadAdminV1 {
         )
     }
 
+    async squashNft(): Promise<OutRef> {
+        const utxos = await lucid.wallet.getUtxos()
+        const assets = {
+            lovelace: 0n
+        }
+        for(let utxo of utxos) {
+            for(let asset in utxo.assets) {
+                if(asset in assets) {
+                    assets[asset] += BigInt(utxo.assets[asset])
+                } else {
+                    assets[asset] = BigInt(utxo.assets[asset])
+                }
+            }
+        }
+        assets.lovelace -= 2_000_000n
+
+        const tx = await this.lucid
+            .newTx()
+            .collectFrom(utxos)
+            .payToAddress(await this.lucid.wallet.address(), assets)
+            .complete()
+
+        const signedTx = await tx
+            .sign()
+            .complete()
+
+        const txHash = await signedTx.submit();
+
+        return {
+            txHash,
+            outputIndex: 0
+        }
+    }
+
     public getInstantBuyScript(): Script {
         return getCompiledCode(JamOnBreadAdminV1.instantBuyScriptTitle)
     }
@@ -154,7 +188,7 @@ class JamOnBreadAdminV1 {
     parseRoyalty(datum: Constr<any>) : Portion | undefined {
         if(datum.index == 0) {
             return {
-                percent: datum.fields[0].fields[0],
+                percent: Number(datum.fields[0].fields[0]) / 10_000,
                 treasury: Data.to(datum.fields[0].fields[1])
             }
         }else {
@@ -175,7 +209,7 @@ class JamOnBreadAdminV1 {
             beneficier_stake ? this.lucid.utils.keyHashToCredential(beneficier_stake) : undefined
         )
         const listingMarketDatum = Data.to(datum.fields[1])
-        console.log(datum.fields[2].index)
+
         const listingAffiliateDatum = datum.fields[2].index == 0 ? Data.to(datum.fields[2].fields[0]) : listingMarketDatum
         const amount = datum.fields[3]
         const royalty = this.parseRoyalty(datum.fields[4])
@@ -268,7 +302,7 @@ class JamOnBreadAdminV1 {
         const params = this.parseInstantbuyDatum(collectUtxo.datum!)
         const provision = 0.025 * Number(params.amount)
 
-        console.log(params)
+        console.debug("Instant buy", params)
         const payToTreasuries = {
             [Data.to(this.treasuryDatum)]: provision * 0.1
         }
@@ -280,7 +314,7 @@ class JamOnBreadAdminV1 {
         }
 
         if(params.royalty) {
-            this.addToTreasuries(payToTreasuries, params.royalty.treasury, params.amount * BigInt(params.royalty.percent) / 10_000n)
+            this.addToTreasuries(payToTreasuries, params.royalty.treasury, BigInt(Math.ceil(Number(params.amount) * params.royalty.percent)))
         }
 
         const buyRedeemer = Data.to(new Constr(0, [
@@ -302,10 +336,11 @@ class JamOnBreadAdminV1 {
             collectFromTreasuries[datum] = treasuery
         }
 
-        console.log(payToTreasuries)
+        console.debug("Pay to treasuries", payToTreasuries)
 
         let buildTx = this.lucid
             .newTx()
+            .collectFrom(await this.lucid.wallet.getUtxos())
             .collectFrom(
                 Object.values(collectFromTreasuries),
                 Data.void()
@@ -356,9 +391,8 @@ lucid.selectWalletFromPrivateKey(privKey)
 
 const job = new JamOnBreadAdminV1(lucid, "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a", "556e69717565")
 const unit = "eb029a3fc7fcb011f047011189eb0845b06c5b3d11506ee1dc659cea" + "4d794e4654"
-//console.log(await job.getTreasuries())
-
-
+// console.log(await job.getTreasuries())
+// console.log(await job.squashNft())
 
 /*
 console.log(
@@ -378,8 +412,6 @@ console.log(
 )
 */
 
-
-
 /*
 console.log(await job.instantBuyCancel({
     txHash: "c4464fd4c4e2083c037a8d89e22235104c6f95eee9b076b1527a35cfa0367481",
@@ -390,17 +422,17 @@ console.log(await job.instantBuyCancel({
 
 console.log(await job.instantBuyProceed(
     {
-        txHash: "1ff304d8c27f4969e6ef7cfa347c5a549e99401f1625f748f13351b899546f5c",
+        txHash: "f8bb191e330a380f9ebb0846f522a996c0f87431738cd29257b5a07994f34dd4",
         outputIndex: 0
     },
     {
-        percent: 0.1,
+        percent: 0.2,
         treasury: Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vz6r5aetvn6m6y8lax7zlx9dl7hnfm53q4njwzdcyzqmzdct4jjws").hash
         ))
     },
     {
-        percent: 0.1,
+        percent: 0.2,
         treasury: Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vz695rlavrxv8wm2r7ur6skp5f3gtkx3xsqk20gpvest92qd42p39").hash
         ))
@@ -422,8 +454,7 @@ console.log(await job.instantBuyProceed(
         treasury: Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vplh9cjn8vhmzn7qs8ynv7aea3t567a9w4lagetrf896q3q0xamca").hash
         ))
-    },
-    /*
+    },/*
     {
         percent: 0.1,
         treasury: Data.to(encodeTreasuryDatumAddress(

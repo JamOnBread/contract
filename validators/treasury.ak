@@ -1,4 +1,5 @@
 use aiken/transaction.{ScriptContext}
+use common/constant
 use common/method
 use common/types
 
@@ -8,23 +9,29 @@ validator {
     _redeemer: Data,
     context: ScriptContext,
   ) -> Bool {
-    let credential = method.get_script_hash(context)
+    let address = method.get_script_address(context)
     let validated = method.transaction_is_validated(context, datum)
-    let inputs =
-      method.number_inputs_address_datum(
-        context.transaction.inputs,
-        credential,
-        datum,
-      )
+
     let outputs =
       method.number_outputs_address_datum(
         context.transaction.outputs,
-        credential,
+        address,
         datum,
       )
 
     // Check that number of inputs is same like number of outputs
     // If transaction is validated (by credential or token) or outputs (lovelace) are bigger then inputs (lovelace)
-    inputs.1st == outputs.1st && ( validated || inputs.2nd < outputs.2nd )
+    if validated {
+      outputs.1st >= constant.minimal_number_treasuries
+    } else {
+      let inputs =
+        method.number_inputs_address_datum(
+          context.transaction.inputs,
+          address,
+          datum,
+        )
+
+      inputs.1st == outputs.1st && inputs.2nd < outputs.2nd
+    }
   }
 }
