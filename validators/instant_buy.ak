@@ -1,4 +1,3 @@
-//use aiken/cbor
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/math.{max}
 use aiken/option
@@ -9,6 +8,11 @@ use common/constant
 use common/method
 use common/types
 
+type InstantBuyRedeemer {
+  Accept(List<types.SellingMarketplaceFeePart>)
+  Cancel
+}
+
 validator(
   treasury_script_hash: Hash<Blake2b_224, credential.Script>,
   stake_addresses: List<credential.StakeCredential>,
@@ -16,7 +20,7 @@ validator(
 ) {
   fn spend_v1(
     datum: types.InstantBuyDatum,
-    redeemer: types.InstantBuyRedeemer,
+    redeemer: InstantBuyRedeemer,
     context: transaction.ScriptContext,
   ) -> Bool {
     // Purpose must be spend
@@ -27,7 +31,7 @@ validator(
           transaction.find_input(context.transaction.inputs, output_reference)
         when redeemer is {
           // When canceling listing
-          types.InstantBuyRedeemerCancel ->
+          Cancel ->
             when datum.seller_address.payment_credential is {
               credential.VerificationKeyCredential(credential) ->
                 method.transaction_is_signed(context, credential)
@@ -35,7 +39,7 @@ validator(
             }
 
           // When buying instantbuy
-          types.InstantBuyRedeemerBuy(selling_marketplace_portions) -> {
+          Accept(selling_marketplace_portions) -> {
             let provision_base =
               datum.asset_price * constant.fees_basis / constant.fixed_decimals
 
@@ -70,47 +74,16 @@ validator(
 
             // Add royalty if defined
             let (provisions, final_price) =
-              when datum.royalty is {
-                Some(royalty) -> {
-                  let provision =
-                    datum.asset_price * royalty.portion / constant.fixed_decimals
+              method.get_provisions_final_price(
+                provisions,
+                datum.asset_price,
+                provision_base,
+                datum.seller_address,
+                datum.royalty,
+              )
 
-                  when royalty.treasury is {
-                    types.AddressWithdrawalMethod(credential.Address(
-                      payment_credential,
-                      ..,
-                    )) ->
-                      // If royalty match seller address, stake part can be ommited in treasury
-                      if
-                      payment_credential == datum.seller_address.payment_credential{
-                      
-                        // Price - provisions (royalty is included in price)
-                        (provisions, datum.asset_price - provision_base)
-                      } else {
-                        (
-                          method.provision_add(
-                            provisions,
-                            royalty.treasury,
-                            provision,
-                          ),
-                          // Price - royalty - provisions
-                          datum.asset_price - provision - provision_base,
-                        )
-                      }
-                    _other ->
-                      (
-                        method.provision_add(
-                          provisions,
-                          royalty.treasury,
-                          provision,
-                        ),
-                        // Price - royalty - provisions
-                        datum.asset_price - provision - provision_base,
-                      )
-                  }
-                }
-                None -> (provisions, datum.asset_price)
-              }
+            // 
+            let final_price = final_price + value.lovelace_of(input.value)
 
             (datum.asset_price > constant.minimal_contract_price)? && method.check_portions(
               selling_marketplace_portions,
@@ -120,13 +93,11 @@ validator(
               context.transaction,
               treasury_script_hash,
               stake_addresses,
-            )? && method.check_required_payment(
+            )? && method.check_required_ada(
               context.transaction.outputs,
               datum.seller_address,
-              value.ada_policy_id,
-              value.ada_asset_name,
               // Need to return original locked ADA to owner
-              final_price + value.lovelace_of(input.value),
+              final_price,
             )?
           }
         }

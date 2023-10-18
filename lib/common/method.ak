@@ -345,18 +345,43 @@ pub fn check_all_provisions(
   )
 }
 
-pub fn check_required_payment(
+pub fn check_required_ada(
   outputs: List<transaction.Output>,
   address: credential.Address,
-  policy_id: value.PolicyId,
-  asset_name: value.AssetName,
   amount: Int,
 ) -> Bool {
   list.any(
     outputs,
     fn(output) {
       if output.address == address {
-        value.quantity_of(output.value, policy_id, asset_name) > amount
+        value.lovelace_of(output.value) >= amount
+      } else {
+        False
+      }
+    },
+  )
+}
+
+pub fn check_required_payment(
+  outputs: List<transaction.Output>,
+  address: credential.Address,
+  wanted_asset: types.WantedAsset,
+  ada: Int,
+) -> Bool {
+  list.any(
+    outputs,
+    fn(output) {
+      if output.address == address {
+        when wanted_asset is {
+          types.WantedAssetSpecific(types.AssetClass(policy_id, asset_name)) ->
+            value.quantity_of(output.value, policy_id, asset_name) >= 1 && value.lovelace_of(
+              output.value,
+            ) >= ada
+          types.WantedAssetAny(policy_id) ->
+            !dict.is_empty(value.tokens(output.value, policy_id)) && value.lovelace_of(
+              output.value,
+            ) >= ada
+        }
       } else {
         False
       }
@@ -523,4 +548,46 @@ test test_check_portions() {
     portions_3,
     0,
   )? && !check_portions(portions_4, 0)?
+}
+
+pub fn get_provisions_final_price(
+  provisions: List<(types.WithdrawalMethod, Int)>,
+  price: Int,
+  provision_base: Int,
+  address: Address,
+  maybe_royalty: Option<types.Royalty>,
+) -> (List<(types.WithdrawalMethod, Int)>, Int) {
+  let (provisions, final_price) =
+    when maybe_royalty is {
+      Some(royalty) -> {
+        let provision = price * royalty.portion / constant.fixed_decimals
+
+        when royalty.treasury is {
+          types.AddressWithdrawalMethod(credential.Address(
+            payment_credential,
+            ..,
+          )) ->
+            // If royalty match seller address, stake part can be ommited in treasury
+            if payment_credential == address.payment_credential {
+              // Price - provisions (royalty is included in price)
+              (provisions, price - provision_base)
+            } else {
+              (
+                provision_add(provisions, royalty.treasury, provision),
+                // Price - royalty - provisions
+                price - provision - provision_base,
+              )
+            }
+          _other ->
+            (
+              provision_add(provisions, royalty.treasury, provision),
+              // Price - royalty - provisions
+              price - provision - provision_base,
+            )
+        }
+      }
+      None -> (provisions, price - provision_base)
+    }
+
+  (provisions, final_price)
 }

@@ -4,14 +4,14 @@ use aiken/transaction/credential.{
   Address, Inline, Script, ScriptCredential, StakeCredential,
   VerificationKeyCredential,
 }
-use aiken/transaction/value.{PolicyId}
+use aiken/transaction/value
 
 pub fn data(data: Data) -> Data {
   data
 }
 
 pub type TokenValidation {
-  Token { policy: PolicyId, count: Int }
+  Token { policy: value.PolicyId, count: Int }
 }
 
 pub type WithdrawalMethod {
@@ -48,11 +48,11 @@ test test_withdrawal_method_typ_compatible() {
 
 pub type ProtocolParams {
   instant_buy_validator_hash: Hash<Blake2b_224, Script>,
-  instant_buy_currency_symbol: PolicyId,
+  instant_buy_currency_symbol: value.PolicyId,
   offer_calidator_hash: Hash<Blake2b_224, Script>,
-  accept_offer_currency_symbol: PolicyId,
+  accept_offer_currency_symbol: value.PolicyId,
   treasury_validator_hash: Hash<Blake2b_224, Script>,
-  withdraw_fees_currency_symbol: PolicyId,
+  withdraw_fees_currency_symbol: value.PolicyId,
   jam_on_bread_treasury: WithdrawalMethod,
   jam_staking_credentials: List<StakeCredential>,
 }
@@ -112,11 +112,6 @@ pub type SellingMarketplaceFeePart {
 pub type Royalty {
   portion: Int,
   treasury: WithdrawalMethod,
-}
-
-pub type InstantBuyRedeemer {
-  InstantBuyRedeemerBuy(List<SellingMarketplaceFeePart>)
-  InstantBuyRedeemerCancel
 }
 
 pub type InstantBuyDatum {
@@ -182,4 +177,23 @@ test test_instant_buy_datum_2() {
     }
 
   (cbor.serialise(datum) == #"d8799fd8799fd8799f581cbd72b8c93f8d9b995c3381936fbc5166ba44bae685c5664fb22c401cffd87a80ffd8799fd8799fd8799f581c695bba51392ce23336d31b6e2349fb86d5bb9d103eee026813a8dcdaffd87a80ffffd8799fd8799fd8799fd8799f581cc95738f584b27fed8e8d11f022cd5ebb71344fa98e40593b0ae8b89bffd87a80ffffff1a00989680d87a80ff")?
+}
+
+pub type AssetClass {
+  policy_id: value.PolicyId,
+  token_name: value.AssetName,
+}
+
+pub type WantedAsset {
+  WantedAssetSpecific(AssetClass)
+  WantedAssetAny(value.PolicyId)
+}
+
+pub type OfferDatum {
+  offerer_address: Address,
+  listing_marketplace_treasury: WithdrawalMethod,
+  listing_affiliate_treasury: Option<WithdrawalMethod>,
+  offered_price: Int,
+  wanted_asset: WantedAsset,
+  royalty: Option<Royalty>,
 }
