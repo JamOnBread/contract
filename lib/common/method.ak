@@ -42,8 +42,12 @@ pub fn get_number_outputs_by_address_datum(
         datum,
       ){
       
-        if value.lovelace_of(output.value) < constant.min_ada_value {
-          fail @"There is no minimal ada on Output"
+        if
+        value.lovelace_of(output.value) < constant.min_ada_value && value.without_lovelace(
+          output.value,
+        ) == value.zero(){
+        
+          fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           total + 1
         }
@@ -54,7 +58,7 @@ pub fn get_number_outputs_by_address_datum(
   )
 }
 
-pub fn number_outputs_hash_datum(
+pub fn get_number_outputs_ada_by_hash_datum(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
   datum: Data,
@@ -69,8 +73,10 @@ pub fn number_outputs_hash_datum(
       ){
       
         let amount = value.lovelace_of(output.value)
-        if amount < constant.min_ada_value {
-          fail @"There is no minimal ada on Output"
+        if
+        amount < constant.min_ada_value && value.without_lovelace(output.value) == value.zero(){
+        
+          fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           (acc.1st + 1, acc.2nd + amount)
         }
@@ -96,8 +102,10 @@ pub fn get_number_outputs_ada_by_address_datum(
       ){
       
         let amount = value.lovelace_of(output.value)
-        if amount < constant.min_ada_value {
-          fail @"There is no minimal ada on Output"
+        if
+        amount < constant.min_ada_value && value.without_lovelace(output.value) == value.zero(){
+        
+          fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           (acc.1st + 1, acc.2nd + amount)
         }

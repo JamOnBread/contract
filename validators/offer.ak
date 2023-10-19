@@ -71,7 +71,7 @@ validator(
                      selling_marketplace_portions,
                    )
             // Add royalty if defined
-            let (provisions, final_price) =
+            let (provisions, _final_price) =
               method.get_provisions_final_price(
                 provisions,
                 datum.offered_price,
@@ -92,7 +92,7 @@ validator(
               context.transaction.outputs,
               datum.offerer_address,
               datum.wanted_asset,
-              final_price,
+              constant.min_ada_value,
             )?
           }
         }

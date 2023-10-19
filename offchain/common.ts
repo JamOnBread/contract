@@ -1,32 +1,33 @@
 import { Lucid, Script, Constr, Data, PolicyId, Unit, applyParamsToScript, fromText } from "https://deno.land/x/lucid@0.10.7/mod.ts"
+import { Portion, WantedAsset } from "./types.ts"
 
 
 export const plutus = await Deno.readTextFile('plutus.json').then(data => {
-    const plutus =  JSON.parse(data)
+    const plutus = JSON.parse(data)
     console.info("Version:", plutus.preamble.version)
     return plutus
 })
 
-export function version() : string {
+export function version(): string {
     return plutus.preamble.version
 }
 
-export function getValidator(title: string) : any {
-    for(const validator of plutus.validators) {
-        if(validator.title == title) {
+export function getValidator(title: string): any {
+    for (const validator of plutus.validators) {
+        if (validator.title == title) {
             return validator
         }
     }
 }
 
-export function getCompiledCode(title: string) : Script {
+export function getCompiledCode(title: string): Script {
     return {
         type: "PlutusV2",
         script: getValidator(title).compiledCode
     }
 }
 
-export function applyCodeParamas(code: Script, params: any) : Script {
+export function applyCodeParamas(code: Script, params: any): Script {
     return {
         type: "PlutusV2",
         script: applyParamsToScript(
@@ -36,12 +37,12 @@ export function applyCodeParamas(code: Script, params: any) : Script {
     }
 }
 
-export function getCompiledCodeParams(title: string, params: any) : Script {
+export function getCompiledCodeParams(title: string, params: any): Script {
     return applyCodeParamas(getCompiledCode(title), params)
 }
 
 
-export function getRewardAddress(lucid: Lucid, stake: string) : string {
+export function getRewardAddress(lucid: Lucid, stake: string): string {
     return lucid.utils.credentialToRewardAddress(
         lucid.utils.scriptHashToCredential(stake)
     )
@@ -71,9 +72,22 @@ export function encodeTreasuryDatumAddress(
 export const encodeTreasuryDatumTokens = (
     currencySymbol: string,
     minTokens: BigInt
-  ): Constr => {
+): Constr => {
     return new Constr(1, [new Constr(0, [currencySymbol, minTokens])]);
-  };
+};
+
+export function encodeRoyalty(portion?: Portion): Constr<any> {
+    return portion
+        ? new Constr(0, [new Constr(0, [BigInt(portion.percent * 10_000), Data.from(portion.treasury)])])
+        : new Constr(1, []);
+}
+
+
+export function encodeWantedAsset(wantedAsset: WantedAsset): Constr<any> {
+    return wantedAsset.assetName ?
+        new Constr(0, [new Constr(0, [wantedAsset.policyId, wantedAsset.assetName])]) :
+        new Constr(1, [wantedAsset.policyId])
+}
 
 /**
  * Mint new unique asset 
@@ -83,7 +97,7 @@ export const encodeTreasuryDatumTokens = (
  * @param amount 
  * @returns transaction hash
  */
-export async function mintUniqueAsset(lucid: Lucid, name: string, amount: bigint) : Promise<string> {
+export async function mintUniqueAsset(lucid: Lucid, name: string, amount: bigint): Promise<string> {
     // Transform token name to hexa
     const tokenName = fromText(name)
     // Get first UTxO on wallet
@@ -106,7 +120,7 @@ export async function mintUniqueAsset(lucid: Lucid, name: string, amount: bigint
             Data.void()
         )
         .attachMintingPolicy(policy)
-            
+
         .complete();
 
     // Sign & Submit transaction

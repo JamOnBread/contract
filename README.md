@@ -134,6 +134,11 @@ Attackers can send to the treasury many Assets to increase memory consumption an
 Attacker can create treasuries with datum, that is not Inline or with less ADA than is allowed, this treasury SHOULD NOT be listed
 
 
+### UnImplemented - Spending more contracts during a transaction
+If a user spends more contracts (InstantBuy/Offer) during a transaction, it is possible to avoid paying some fees
+
+* Check allowed scripts on an input
+
 ## Building
 
 A standard build is very simple by command:
