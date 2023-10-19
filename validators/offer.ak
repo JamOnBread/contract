@@ -93,7 +93,11 @@ validator(
               datum.offerer_address,
               datum.wanted_asset,
               constant.min_ada_value,
-            )?
+            )? && method.check_input_scripts(
+              context.transaction.inputs,
+              credential.ScriptCredential(treasury_script_hash),
+              output_reference,
+            )
           }
         }
       }

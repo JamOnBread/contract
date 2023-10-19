@@ -360,14 +360,11 @@ class JamOnBreadAdminV1 {
         return tx
     }
 
-    async instantbuyList(unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion) {
+    async instantbuyList(unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion) : Promise<string> {
         let txList = lucid.newTx()
         txList = await this.instantBuyListTx(txList, unit, price, listing, affiliate, royalty)
 
-        return {
-            txHash: await this.finishTx(txList),
-            outputIndex: 0
-        }
+        return await this.finishTx(txList)            
     }
 
     async instantBuyCancelTx(tx: Tx, utxo: UTxO | OutRef): Promise<Tx> {
@@ -401,7 +398,7 @@ class JamOnBreadAdminV1 {
         return await this.finishTx(txUpdate)
     }
 
-    async instantBuyProceed(utxo: OutRef, force: boolean = false, ...sellMarketPortions: Portion[]) {
+    async instantBuyProceed(utxo: OutRef, force: boolean = false, ...sellMarketPortions: Portion[]) : Promise<string> {
 
         const [collectUtxo] = await lucid.utxosByOutRef([
             utxo
@@ -452,11 +449,7 @@ class JamOnBreadAdminV1 {
             { lovelace: params.amount + collectUtxo.assets.lovelace }
         )
         buildTx = await this.payToTreasuries(buildTx, payToTreasuries, false)
-
-        return {
-            txHash: await this.finishTx(buildTx),
-            outputIndex: 0
-        }
+        return await this.finishTx(buildTx)
     }
 
     async offerListTx(tx: Tx, asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<Tx> {
@@ -527,7 +520,7 @@ class JamOnBreadAdminV1 {
         return await this.finishTx(txUpdate)
     }
 
-    async offerProceed(utxo: OutRef, unit: Unit, force: boolean = false, ...sellMarketPortions: Portion[]) {
+    async offerProceed(utxo: OutRef, unit: Unit, force: boolean = false, ...sellMarketPortions: Portion[]): Promise<string> {
 
         const [collectUtxo] = await lucid.utxosByOutRef([
             utxo
@@ -583,10 +576,7 @@ class JamOnBreadAdminV1 {
         )
         buildTx = await this.payToTreasuries(buildTx, payToTreasuries, false)
 
-        return {
-            txHash: await this.finishTx(buildTx),
-            outputIndex: 0
-        }
+        return await this.finishTx(buildTx)
     }
 
     async finishTx(tx: Tx): Promise<string> {
@@ -706,16 +696,15 @@ console.log(await job.instantBuyCancel({
 }))
 */
 
-/*
+
 console.log(await job.instantBuyProceed(
     {
-        txHash: "6720a0c3d12331c08192079329cca3f9486fd5c563ba94c59acbe3f47264c986",
+        txHash: "0db4ecea71e76926635b84870d363b557599abf73e69d1d82c9045f5cc8ea760",
         outputIndex: 0
     },
     false,
-    portions
+    ...portions.slice(0, 5)
 ))
-*/
 
 /*
 console.log(
@@ -744,6 +733,7 @@ console.log(await job.offerCancel({
 }))
 */
 
+/*
 console.log(await job.offerProceed(
     {
         txHash: "ef0aa11cbfa22359623fbdaee32464513c82313dcd3b57130a92821ed0d060c7",
@@ -753,6 +743,6 @@ console.log(await job.offerProceed(
     false,
     ...portions.slice(0, 5)
 ))
-
+*/
 
 // console.log(job.getTreasuryAddress(0))

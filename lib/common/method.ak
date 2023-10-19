@@ -599,3 +599,23 @@ pub fn get_provisions_final_price(
 
   (provisions, final_price)
 }
+
+pub fn check_input_scripts(
+  inputs: List<transaction.Input>,
+  treasury: Credential,
+  output_reference: transaction.OutputReference,
+) -> Bool {
+  when inputs is {
+    [x, ..xs] ->
+      if
+      x.output_reference == output_reference || x.output.address.payment_credential == treasury{
+      
+        check_input_scripts(xs, treasury, output_reference)
+      } else {
+        expect VerificationKeyCredential(_) =
+          x.output.address.payment_credential
+        check_input_scripts(xs, treasury, output_reference)
+      }
+    [] -> True
+  }
+}

@@ -98,7 +98,11 @@ validator(
               datum.seller_address,
               // Need to return original locked ADA to owner
               final_price,
-            )?
+            )? && method.check_input_scripts(
+              context.transaction.inputs,
+              credential.ScriptCredential(treasury_script_hash),
+              output_reference,
+            )
           }
         }
       }

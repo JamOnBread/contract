@@ -124,17 +124,17 @@ Attackers can block happy path usage of the contract by using treasury outside o
 * It is problematic only for NFT with low value (NFT is more expansive than expected)
 
 
-### UnImplemented - Treasury flooding with useless assets
+### Treasury flooding with useless assets - Fixed - Offchain
 Attackers can send to the treasury many Assets to increase memory consumption and block successful transactions because the memory limit
 
 * Prevent sending Assets to treasury during manipulation (spend/withdraw)
 * Do not list free treasury with another asset in an internal database
 
-### UnImplemented - Treasury with datum by hash
+### Treasury with datum by hash - Offchain
 Attacker can create treasuries with datum, that is not Inline or with less ADA than is allowed, this treasury SHOULD NOT be listed
 
 
-### UnImplemented - Spending more contracts during a transaction
+### Spending more contracts during a transaction - FIxed
 If a user spends more contracts (InstantBuy/Offer) during a transaction, it is possible to avoid paying some fees
 
 * Check allowed scripts on an input
