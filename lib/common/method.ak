@@ -11,11 +11,13 @@ use aiken/transaction/value
 use common/constant
 use common/types
 
+/// Gen number of token with PoplicyId - sum all availible
 pub fn policy_id_of(values: value.Value, policy_id: value.PolicyId) -> Int {
   value.tokens(values, policy_id)
     |> dict.foldr(0, fn(_, v, r) { v + r })
 }
 
+/// Get script address from context
 pub fn get_script_address(context: transaction.ScriptContext) -> Address {
   expect transaction.Spend(output_reference) = context.purpose
   expect Some(input) =
@@ -24,10 +26,15 @@ pub fn get_script_address(context: transaction.ScriptContext) -> Address {
   input.output.address
 }
 
+/// Get script credential from context
 pub fn get_script_hash(context: transaction.ScriptContext) -> Credential {
   get_script_address(context).payment_credential
 }
 
+/// Get number of outputs with provided address and script datum
+/// There are some required check
+/// * minimal ADA value
+/// * no other asset except ADA
 pub fn get_number_outputs_by_address_datum(
   outputs: List<transaction.Output>,
   address: Address,
@@ -58,6 +65,10 @@ pub fn get_number_outputs_by_address_datum(
   )
 }
 
+/// Get number of outputs and sum of ADA with provided script hash and script datum
+/// There are some required check
+/// * minimal ADA value
+/// * no other asset except ADA
 pub fn get_number_outputs_ada_by_hash_datum(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
@@ -87,6 +98,10 @@ pub fn get_number_outputs_ada_by_hash_datum(
   )
 }
 
+/// Get number of outputs with provided address and script datum
+/// There are some required check
+/// * minimal ADA value
+/// * no other asset except ADA
 pub fn get_number_outputs_ada_by_address_datum(
   outputs: List<transaction.Output>,
   address: Address,
@@ -116,6 +131,7 @@ pub fn get_number_outputs_ada_by_address_datum(
   )
 }
 
+/// Get number of inputs by address and datum
 pub fn get_number_inputs_by_address_datum(
   inputs: List<transaction.Input>,
   address: Address,
@@ -138,6 +154,7 @@ pub fn get_number_inputs_by_address_datum(
   )
 }
 
+/// Get number of inputs and sum ADA by script hash and datum
 pub fn get_number_inputs_ada_by_credential_datum(
   inputs: List<transaction.Input>,
   payment_credential: Credential,
@@ -160,6 +177,7 @@ pub fn get_number_inputs_ada_by_credential_datum(
   )
 }
 
+/// Get number of inputs and sum ADA by address and datum
 pub fn get_number_inputs_ada_by_address_datum(
   inputs: List<transaction.Input>,
   address: Address,
@@ -182,6 +200,7 @@ pub fn get_number_inputs_ada_by_address_datum(
   )
 }
 
+/// Check, if transaction is signed by provided payment credential
 pub fn check_transaction_is_signed(
   context: transaction.ScriptContext,
   owner: Hash<Blake2b_224, VerificationKey>,
@@ -222,7 +241,8 @@ pub fn check_transaction_is_validated(
   }
 }
 
-/// 
+/// Get input of specified treasury
+/// Treasury must be unique
 pub fn get_treasury_input_value(
   inputs: List<transaction.Input>,
   script_hash: Hash<Blake2b_224, credential.Script>,
@@ -246,6 +266,8 @@ pub fn get_treasury_input_value(
   }
 }
 
+/// Get output of specified treasury
+/// Treasury must be unique
 pub fn get_treasury_output_value(
   outputs: List<transaction.Output>,
   script_hash: Hash<Blake2b_224, credential.Script>,
@@ -267,6 +289,7 @@ pub fn get_treasury_output_value(
   }
 }
 
+/// Check, if treasuries are unique - obsolete
 pub fn check_treasury_input_datum_unique(
   inputs: List<transaction.Input>,
   payment_credential: Credential,
@@ -293,6 +316,7 @@ pub fn check_treasury_input_datum_unique(
   }
 }
 
+/// Check, if address is valid treasury with correct stakes
 pub fn check_treasury_address(
   address: Address,
   treasury_script_hash: Hash<Blake2b_224, credential.Script>,
@@ -304,7 +328,7 @@ pub fn check_treasury_address(
   )
 }
 
-pub fn test_check_treasury_address_1() {
+test test_check_treasury_address_1() {
   let raw_address = "payment_credential"
   let raw_stake_1 = "stake_credential_1"
   let raw_stake_2 = "stake_credential_2"
@@ -329,6 +353,7 @@ pub fn test_check_treasury_address_1() {
 type Provision =
   (types.WithdrawalMethod, Int)
 
+/// Check, if all provisions has been paid
 pub fn check_all_provisions(
   provisions: List<Provision>,
   transaction: transaction.Transaction,
@@ -353,6 +378,7 @@ pub fn check_all_provisions(
   )
 }
 
+/// Check, if output with address exists and contains ADA value
 pub fn check_required_ada(
   outputs: List<transaction.Output>,
   address: credential.Address,
@@ -370,6 +396,7 @@ pub fn check_required_ada(
   )
 }
 
+/// Check, if ouptut exists and contains ADA/specific asset
 pub fn check_required_payment(
   outputs: List<transaction.Output>,
   address: credential.Address,
@@ -397,6 +424,7 @@ pub fn check_required_payment(
   )
 }
 
+/// Add provision to list
 pub fn provision_add(
   self: List<Provision>,
   treasury: types.WithdrawalMethod,
@@ -414,6 +442,7 @@ pub fn provision_add(
   }
 }
 
+/// Add portion to provision
 pub fn provision_add_portion(
   self: List<(types.WithdrawalMethod, Int)>,
   provision_base: Int,
@@ -436,6 +465,7 @@ pub fn provision_add_portion(
   }
 }
 
+/// Sumarize provision
 pub fn provision_sum(self: List<(types.WithdrawalMethod, Int)>) -> Int {
   list.foldr(self, 0, fn(n, total) { total + n.2nd })
 }
@@ -525,6 +555,7 @@ test test_provision_add() {
   provision2 == provisions
 }
 
+/// Check, if sum of portion is lover then expected
 pub fn check_portions(
   portions: List<types.SellingMarketplaceFeePart>,
   sum: Int,
@@ -558,6 +589,7 @@ test test_check_portions() {
   )? && !check_portions(portions_4, 0)?
 }
 
+/// Mechanism, that allow to pay royalty provision directly (if seller is owner of royalty treasury)
 pub fn get_provisions_final_price(
   provisions: List<(types.WithdrawalMethod, Int)>,
   price: Int,
@@ -600,6 +632,7 @@ pub fn get_provisions_final_price(
   (provisions, final_price)
 }
 
+/// Check, all script input, that there is only treasury and current output reference
 pub fn check_input_scripts(
   inputs: List<transaction.Input>,
   treasury: Credential,

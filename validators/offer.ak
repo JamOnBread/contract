@@ -80,6 +80,7 @@ validator(
                 datum.royalty,
               )
 
+            // Final checks
             (value.lovelace_of(input.value) >= datum.offered_price + constant.min_ada_value)? && (datum.offered_price > constant.minimal_contract_price)? && method.check_portions(
               selling_marketplace_portions,
               0,

@@ -52,7 +52,7 @@ class JamOnBreadAdminV1 {
         this.jamTokenPolicy = jamTokenPolicy
         this.jamTokenName = jamTokenName
         this.jamStakes = JamOnBreadAdminV1.getJamStakes(
-            lucid,
+            this.lucid,
             this.jamTokenPolicy,
             JamOnBreadAdminV1.numberOfToken,
             JamOnBreadAdminV1.numberOfStakes
@@ -97,7 +97,7 @@ class JamOnBreadAdminV1 {
     }
 
     async squashNft(): Promise<OutRef> {
-        const utxos = await lucid.wallet.getUtxos()
+        const utxos = await this.lucid.wallet.getUtxos()
         const assets = {
             lovelace: 0n
         }
@@ -144,7 +144,7 @@ class JamOnBreadAdminV1 {
 
         const paymentCredential = {
             type: "Script",
-            hash: lucid.utils.validatorToScriptHash(this.treasuryScript)
+            hash: this.lucid.utils.validatorToScriptHash(this.treasuryScript)
         } as Credential
 
         const stakeCredential = {
@@ -152,14 +152,14 @@ class JamOnBreadAdminV1 {
             hash: this.jamStakes[stakeId]
         } as Credential
 
-        return lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
+        return this.lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
     }
 
     async getEncodedAddress() {
-        const address = await lucid.wallet.address()
-        const payCred = lucid.utils.paymentCredentialOf(address)
+        const address = await this.lucid.wallet.address()
+        const payCred = this.lucid.utils.paymentCredentialOf(address)
         try {
-            const stakeCred = lucid.utils.stakeCredentialOf(address)
+            const stakeCred =  this.lucid.utils.stakeCredentialOf(address)
             return encodeAddress(payCred.hash, stakeCred!.hash)
         }
         catch (e) {
@@ -173,7 +173,7 @@ class JamOnBreadAdminV1 {
 
         const paymentCredential = {
             type: "Script",
-            hash: lucid.utils.validatorToScriptHash(this.instantBuyScript)
+            hash:  this.lucid.utils.validatorToScriptHash(this.instantBuyScript)
         } as Credential
 
         const stakeCredential = {
@@ -181,7 +181,7 @@ class JamOnBreadAdminV1 {
             hash: this.jamStakes[stakeId]
         } as Credential
 
-        return lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
+        return  this.lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
     }
 
     getOfferAddress(stakeId?: number): string {
@@ -190,7 +190,7 @@ class JamOnBreadAdminV1 {
 
         const paymentCredential = {
             type: "Script",
-            hash: lucid.utils.validatorToScriptHash(this.offerScript)
+            hash:  this.lucid.utils.validatorToScriptHash(this.offerScript)
         } as Credential
 
         const stakeCredential = {
@@ -198,7 +198,7 @@ class JamOnBreadAdminV1 {
             hash: this.jamStakes[stakeId]
         } as Credential
 
-        return lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
+        return  this.lucid.utils.credentialToAddress(paymentCredential, stakeCredential)
     }
 
     async getTreasuries(): Promise<UTxO[]> {
@@ -361,10 +361,10 @@ class JamOnBreadAdminV1 {
     }
 
     async instantbuyList(unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion) : Promise<string> {
-        let txList = lucid.newTx()
+        let txList =this.lucid.newTx()
         txList = await this.instantBuyListTx(txList, unit, price, listing, affiliate, royalty)
 
-        return await this.finishTx(txList)            
+        return await this.finishTx(txList)
     }
 
     async instantBuyCancelTx(tx: Tx, utxo: UTxO | OutRef): Promise<Tx> {
@@ -372,7 +372,7 @@ class JamOnBreadAdminV1 {
         tx = tx
             .collectFrom(toSpend, Data.to(new Constr(1, [])))
             .attachSpendingValidator(this.instantBuyScript)
-            .addSigner(await lucid.wallet.address())
+            .addSigner(await this.lucid.wallet.address())
         return tx
     }
 
@@ -383,7 +383,7 @@ class JamOnBreadAdminV1 {
     }
 
     async instantBuyUpdateTx(tx: Tx, unit: Unit, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<Tx> {
-        const toSpend = await lucid.utxoByUnit(unit)
+        const toSpend = await this.lucid.utxoByUnit(unit)
         tx = await this.instantBuyCancelTx(tx, {
             txHash: toSpend.txHash,
             outputIndex: toSpend.outputIndex
@@ -400,7 +400,7 @@ class JamOnBreadAdminV1 {
 
     async instantBuyProceed(utxo: OutRef, force: boolean = false, ...sellMarketPortions: Portion[]) : Promise<string> {
 
-        const [collectUtxo] = await lucid.utxosByOutRef([
+        const [collectUtxo] = await this.lucid.utxosByOutRef([
             utxo
         ])
 
@@ -435,7 +435,7 @@ class JamOnBreadAdminV1 {
         let buildTx = this.lucid
             .newTx()
             // TODO: To test big portion of assets
-            //.collectFrom(await this.lucid.wallet.getUtxos()) 
+            //.collectFrom(await this.lucid.wallet.getUtxos())
             .collectFrom(
                 [
                     collectUtxo
@@ -480,7 +480,7 @@ class JamOnBreadAdminV1 {
 
 
     async offerList(asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion) {
-        let txList = lucid.newTx()
+        let txList =this.lucid.newTx()
         txList = await this.offerListTx(txList, asset, price, listing, affiliate, royalty)
 
         return {
@@ -494,7 +494,7 @@ class JamOnBreadAdminV1 {
         tx = tx
             .collectFrom(toSpend, Data.to(new Constr(1, [])))
             .attachSpendingValidator(this.offerScript)
-            .addSigner(await lucid.wallet.address())
+            .addSigner(await this.lucid.wallet.address())
         return tx
     }
 
@@ -504,25 +504,25 @@ class JamOnBreadAdminV1 {
         return await this.finishTx(txCancel)
     }
 
-    async offerUpdateTx(tx: Tx, asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<Tx> {
-        const toSpend = await lucid.utxoByUnit(unit)
+    async offerUpdateTx(tx: Tx, utxo: UTxO, asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<Tx> {
+        const toSpend = await this.lucid.utxoByUnit(utxo)
         tx = await this.offerCancelTx(tx, {
             txHash: toSpend.txHash,
             outputIndex: toSpend.outputIndex
         })
-        tx = this.instantBuyListTx(tx, unit, price, listing, affiliate, royalty)
+        tx = this.offerListTx(tx, asset, price, listing, affiliate, royalty)
         return tx
     }
 
-    async offerUpdate(tx: Tx, asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<string> {
+    async offerUpdate(tx: Tx, utxo: UTxO, asset: WantedAsset, price: bigint, listing?: string, affiliate?: string, royalty?: Portion): Promise<string> {
         let txUpdate = this.lucid.newTx()
-        txUpdate = this.offerUpdateTx(tx, asset, price, listing, affiliate, royalty)
+        txUpdate = this.offerUpdateTx(tx, utxo, asset, price, listing, affiliate, royalty)
         return await this.finishTx(txUpdate)
     }
 
     async offerProceed(utxo: OutRef, unit: Unit, force: boolean = false, ...sellMarketPortions: Portion[]): Promise<string> {
 
-        const [collectUtxo] = await lucid.utxosByOutRef([
+        const [collectUtxo] = await this.lucid.utxosByOutRef([
             utxo
         ])
 
@@ -557,7 +557,7 @@ class JamOnBreadAdminV1 {
         let buildTx = this.lucid
             .newTx()
             // TODO: To test big portion of assets
-            //.collectFrom(await this.lucid.wallet.getUtxos()) 
+            //.collectFrom(await this.lucid.wallet.getUtxos())
             .collectFrom(
                 [
                     collectUtxo
@@ -589,9 +589,11 @@ class JamOnBreadAdminV1 {
 
 }
 
+/*
+
 const privKey = "ed25519_sk1z5zd4ap8nyyvlh2uz5rt08xh76yjhs0v7yv58vh00z399m3vrppqfhxv0n" // Treaury
 //const privKey = "ed25519_sk1vmcvrrew9ppggulj08e9lg5w333t58qy2pmylprz4lg2ka0887kqz5zurk" // Test
-const lucid = await Lucid.new(
+constthis.lucid = await Lucid.new(
     new Blockfrost("https://cardano-preprod.blockfrost.io/api/v0", "preprodVm9mYgzOYXlfFrFYfgJ2Glz7AlnMjvV9"),
     "Preprod",
 )
@@ -675,8 +677,8 @@ const portions = [
 /*
 console.log(
     await job.instantbuyList(
-        unit, 
-        10_000_000n, 
+        unit,
+        10_000_000n,
         Data.to(encodeTreasuryDatumAddress(
             lucid.utils.paymentCredentialOf("addr_test1vp54hwj38ykwyvek6vdkug6flwrdtwuazqlwuqngzw5deks388fd7").hash
         )),
@@ -696,7 +698,7 @@ console.log(await job.instantBuyCancel({
 }))
 */
 
-
+/*
 console.log(await job.instantBuyProceed(
     {
         txHash: "0db4ecea71e76926635b84870d363b557599abf73e69d1d82c9045f5cc8ea760",
@@ -705,6 +707,7 @@ console.log(await job.instantBuyProceed(
     false,
     ...portions.slice(0, 5)
 ))
+*/
 
 /*
 console.log(
