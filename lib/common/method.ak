@@ -69,7 +69,7 @@ pub fn get_number_outputs_by_address_datum(
 /// There are some required check
 /// * minimal ADA value
 /// * no other asset except ADA
-pub fn get_number_outputs_ada_by_hash_datum(
+pub fn get_number_outputs_ada_by_credential_datum(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
   datum: Data,
