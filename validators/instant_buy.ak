@@ -77,12 +77,12 @@ validator(
               method.get_provisions_final_price(
                 provisions,
                 datum.asset_price,
-                provision_base,
+                method.provision_sum(provisions),
                 datum.seller_address,
                 datum.royalty,
               )
 
-            // 
+            //
             let final_price = final_price + value.lovelace_of(input.value)
 
             (datum.asset_price > constant.minimal_contract_price)? && method.check_portions(
@@ -115,23 +115,23 @@ validator(
 ///     100_000_000_000_000_000_000_000_000 * 10_000 * constant.selling_marketplace_portion / (
 ///       constant.fixed_decimals * constant.fixed_decimals
 ///     )
-/// 
+///
 ///   provision == 50_000_000_000_000_000_000_000_000
 /// }
-///  let provisions = 
+///  let provisions =
 ///    dict.new()
 ///    // Add JoB provision
 ///    |> dict.insert_with(
-///        key: cbor.serialise(job), 
-///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals), 
-///        with: sum, 
+///        key: cbor.serialise(job),
+///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals),
+///        with: sum,
 ///        compare: bytearray.compare
 ///    )
 ///    // Add Listing market treasury
 ///    |> dict.insert_with(
-///        key: cbor.serialise(job), 
-///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals), 
-///        with: sum, 
+///        key: cbor.serialise(job),
+///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals),
+///        with: sum,
 ///        compare: bytearray.compare
 ///    )
 ///    // Add Listing market affiliate

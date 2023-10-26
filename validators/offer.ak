@@ -75,7 +75,7 @@ validator(
               method.get_provisions_final_price(
                 provisions,
                 datum.offered_price,
-                provision_base,
+                method.provision_sum(provisions),
                 datum.offerer_address,
                 datum.royalty,
               )
