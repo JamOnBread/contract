@@ -35,7 +35,7 @@ pub fn get_script_hash(context: transaction.ScriptContext) -> Credential {
 /// There are some required check
 /// * minimal ADA value
 /// * no other asset except ADA
-pub fn get_number_outputs_by_address_datum(
+pub fn get_number_outputs_by_address_datum_and_check_validity(
   outputs: List<transaction.Output>,
   address: Address,
   datum: Data,
@@ -50,9 +50,9 @@ pub fn get_number_outputs_by_address_datum(
       ){
       
         if
-        value.lovelace_of(output.value) < constant.min_ada_value && value.without_lovelace(
+        value.lovelace_of(output.value) < constant.min_ada_value || value.without_lovelace(
           output.value,
-        ) == value.zero(){
+        ) != value.zero(){
         
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {
@@ -69,7 +69,7 @@ pub fn get_number_outputs_by_address_datum(
 /// There are some required check
 /// * minimal ADA value
 /// * no other asset except ADA
-pub fn get_number_outputs_ada_by_hash_datum(
+pub fn get_number_outputs_ada_by_hash_datum_and_check_validity(
   outputs: List<transaction.Output>,
   payment_credential: Credential,
   datum: Data,
@@ -85,7 +85,7 @@ pub fn get_number_outputs_ada_by_hash_datum(
       
         let amount = value.lovelace_of(output.value)
         if
-        amount < constant.min_ada_value && value.without_lovelace(output.value) == value.zero(){
+        amount < constant.min_ada_value || value.without_lovelace(output.value) != value.zero(){
         
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {
@@ -102,7 +102,7 @@ pub fn get_number_outputs_ada_by_hash_datum(
 /// There are some required check
 /// * minimal ADA value
 /// * no other asset except ADA
-pub fn get_number_outputs_ada_by_address_datum(
+pub fn get_number_outputs_ada_by_address_datum_and_check_validity(
   outputs: List<transaction.Output>,
   address: Address,
   datum: Data,
@@ -118,7 +118,7 @@ pub fn get_number_outputs_ada_by_address_datum(
       
         let amount = value.lovelace_of(output.value)
         if
-        amount < constant.min_ada_value && value.without_lovelace(output.value) == value.zero(){
+        amount < constant.min_ada_value || value.without_lovelace(output.value) != value.zero(){
         
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {

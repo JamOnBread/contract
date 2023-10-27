@@ -29,12 +29,12 @@ validator {
           )
         // Get number of outputs with current script (whole address and datum) and calculate sum of ada
         let outputs =
-          method.get_number_outputs_ada_by_address_datum(
+          method.get_number_outputs_ada_by_address_datum_and_check_validity(
             context.transaction.outputs,
             address,
             datum,
           )
-        // Treasury must be present only once as a input (to avoid treasury consumption), 
+        // Treasury must be present only once as a input (to avoid treasury consumption),
         // but there is option to produce more then one treasury with same datum
         // (it is not problem, we can reduce number of treasuries by withdrawal method)
         (inputs.1st == 1)? && (outputs.1st == 1)? && (inputs.2nd < outputs.2nd)?
@@ -48,7 +48,7 @@ validator {
             datum,
           )
         let outputs =
-          method.get_number_outputs_by_address_datum(
+          method.get_number_outputs_by_address_datum_and_check_validity(
             context.transaction.outputs,
             address,
             datum,
