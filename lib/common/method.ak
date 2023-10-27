@@ -597,18 +597,16 @@ test test_check_portions() {
 pub fn get_provisions_final_price(
   provisions: List<(types.WithdrawalMethod, Int)>,
   price: Int,
-  provision_base: Int,
+  provision: Int,
   address: Address,
   maybe_royalty: Option<types.Royalty>,
 ) -> (List<(types.WithdrawalMethod, Int)>, Int) {
   let (provisions, final_price) =
     when maybe_royalty is {
-      Some(royalty) ->
-        if
-        royalty.portion > 0 && royalty.portion < constant.fixed_decimals - constant.fees_basis{
-        
-          let provision = price * royalty.portion / constant.fixed_decimals
+      Some(royalty) -> {
+        let royalty_amount = price * royalty.portion / constant.fixed_decimals
 
+        if royalty_amount > 0 && price >= royalty_amount + provision {
           when royalty.treasury is {
             types.AddressWithdrawalMethod(credential.Address(
               payment_credential,
@@ -617,25 +615,26 @@ pub fn get_provisions_final_price(
               // If royalty match seller address, stake part can be ommited in treasury
               if payment_credential == address.payment_credential {
                 // Price - provisions (royalty is included in price)
-                (provisions, price - provision_base)
+                (provisions, price - provision)
               } else {
                 (
-                  provision_add(provisions, royalty.treasury, provision),
+                  provision_add(provisions, royalty.treasury, royalty_amount),
                   // Price - royalty - provisions
-                  price - provision - provision_base,
+                  price - royalty_amount - provision,
                 )
               }
             _other ->
               (
-                provision_add(provisions, royalty.treasury, provision),
+                provision_add(provisions, royalty.treasury, royalty_amount),
                 // Price - royalty - provisions
-                price - provision - provision_base,
+                price - royalty_amount - provision,
               )
           }
         } else {
-          fail @"Provision cannot be more then price - fees"
+          fail @"Royalties exceed maximum allowed percentage"
         }
-      None -> (provisions, price - provision_base)
+      }
+      None -> (provisions, price - provision)
     }
 
   (provisions, final_price)
