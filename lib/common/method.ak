@@ -430,15 +430,19 @@ pub fn provision_add(
   treasury: types.WithdrawalMethod,
   amount: Int,
 ) -> List<(types.WithdrawalMethod, Int)> {
-  when self is {
-    [] ->
-      [(treasury, amount)]
-    [x, ..xs] ->
-      if x.1st == treasury {
-        [(treasury, x.2nd + amount), ..xs]
-      } else {
-        [x, ..provision_add(xs, treasury, amount)]
-      }
+  if amount > 0 {
+    when self is {
+      [] ->
+        [(treasury, amount)]
+      [x, ..xs] ->
+        if x.1st == treasury {
+          [(treasury, x.2nd + amount), ..xs]
+        } else {
+          [x, ..provision_add(xs, treasury, amount)]
+        }
+    }
+  } else {
+    fail @"Provision must be positive"
   }
 }
 
@@ -599,33 +603,38 @@ pub fn get_provisions_final_price(
 ) -> (List<(types.WithdrawalMethod, Int)>, Int) {
   let (provisions, final_price) =
     when maybe_royalty is {
-      Some(royalty) -> {
-        let provision = price * royalty.portion / constant.fixed_decimals
+      Some(royalty) ->
+        if
+        royalty.portion > 0 && royalty.portion < constant.fixed_decimals - constant.fees_basis{
+        
+          let provision = price * royalty.portion / constant.fixed_decimals
 
-        when royalty.treasury is {
-          types.AddressWithdrawalMethod(credential.Address(
-            payment_credential,
-            ..,
-          )) ->
-            // If royalty match seller address, stake part can be ommited in treasury
-            if payment_credential == address.payment_credential {
-              // Price - provisions (royalty is included in price)
-              (provisions, price - provision_base)
-            } else {
+          when royalty.treasury is {
+            types.AddressWithdrawalMethod(credential.Address(
+              payment_credential,
+              ..,
+            )) ->
+              // If royalty match seller address, stake part can be ommited in treasury
+              if payment_credential == address.payment_credential {
+                // Price - provisions (royalty is included in price)
+                (provisions, price - provision_base)
+              } else {
+                (
+                  provision_add(provisions, royalty.treasury, provision),
+                  // Price - royalty - provisions
+                  price - provision - provision_base,
+                )
+              }
+            _other ->
               (
                 provision_add(provisions, royalty.treasury, provision),
                 // Price - royalty - provisions
                 price - provision - provision_base,
               )
-            }
-          _other ->
-            (
-              provision_add(provisions, royalty.treasury, provision),
-              // Price - royalty - provisions
-              price - provision - provision_base,
-            )
+          }
+        } else {
+          fail @"Provision cannot be more then price - fees"
         }
-      }
       None -> (provisions, price - provision_base)
     }
 
