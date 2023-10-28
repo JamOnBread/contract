@@ -268,7 +268,7 @@ pub fn get_treasury_input_value(
 
 /// Get output of specified treasury
 /// Treasury must be unique
-pub fn get_treasury_output_value(
+pub fn get_treasury_output_value_and_validate(
   outputs: List<transaction.Output>,
   script_hash: Hash<Blake2b_224, credential.Script>,
   stake_addresses: List<credential.StakeCredential>,
@@ -284,7 +284,16 @@ pub fn get_treasury_output_value(
       },
     )
   is {
-    Some(output) -> value.lovelace_of(output.value)
+    Some(output) -> {
+      let amount = value.lovelace_of(output.value)
+      if
+      value.without_lovelace(output.value) == value.zero() && amount >= constant.min_ada_value{
+      
+        amount
+      } else {
+        fail @"There is no minimal ADA on Output or some useless asset"
+      }
+    }
     _other -> 0
   }
 }
@@ -363,7 +372,7 @@ pub fn check_all_provisions(
   list.all(
     provisions,
     fn(provision) {
-      get_treasury_output_value(
+      get_treasury_output_value_and_validate(
         transaction.outputs,
         treasury_script_hash,
         stake_addresses,
