@@ -363,6 +363,7 @@ type Provision =
   (types.WithdrawalMethod, Int)
 
 /// Check, if all provisions has been paid
+/// There is minimal price on provision
 pub fn check_all_provisions(
   provisions: List<Provision>,
   transaction: transaction.Transaction,
@@ -451,7 +452,7 @@ pub fn provision_add(
         }
     }
   } else {
-    fail @"Provision must be positive"
+    fail @"Provision must be greater then zero"
   }
 }
 
@@ -484,7 +485,7 @@ pub fn provision_sum(self: List<(types.WithdrawalMethod, Int)>) -> Int {
 }
 
 test test_procision_add_portions() {
-  let provision_base = 100_000
+  let provision_base = 2_500_000
   let treasury_1 =
     types.TokenWithdrawalMethod(types.Token { policy: "withdrawal1", count: 6 })
 
@@ -533,34 +534,34 @@ test test_provision_add() {
 
   let provisions =
     []
-      |> provision_add(job, 1_000)
-      |> provision_add(affiliate1, 4_000)
-      |> provision_add(job, 5_000)
-      |> provision_add(royalty, 10_000)
-      |> provision_add(job, 5_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
-      |> provision_add(affiliate2, 4_000)
+      |> provision_add(job, 100_000)
+      |> provision_add(affiliate1, 40_000)
+      |> provision_add(job, 50_000)
+      |> provision_add(royalty, 20_000)
+      |> provision_add(job, 50_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
+      |> provision_add(affiliate2, 40_000)
 
   let provision2 = list.unique(provisions)
   trace cbor.diagnostic(provisions)
