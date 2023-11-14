@@ -434,6 +434,17 @@ pub fn check_required_payment(
   )
 }
 
+pub fn provision_add_option(
+  self: List<Provision>,
+  maybe_treasury: Option<types.WithdrawalMethod>,
+  amount: Int,
+) -> List<(types.WithdrawalMethod, Int)> {
+  when maybe_treasury is {
+    Some(treasury) -> provision_add(self, treasury, amount)
+    None -> self
+  }
+}
+
 /// Add provision to list
 pub fn provision_add(
   self: List<Provision>,

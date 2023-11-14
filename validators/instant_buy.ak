@@ -1,6 +1,5 @@
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/math.{max}
-use aiken/option
 use aiken/transaction
 use aiken/transaction/credential
 use aiken/transaction/value
@@ -58,12 +57,9 @@ validator(
                      datum.listing_marketplace_treasury,
                      provision_base * constant.listing_marketplace_portion / constant.fixed_decimals,
                    )
-                |> method.provision_add(
-                     // Add Listing affiliate or listing market place treasury
-                     option.or_else(
-                       datum.listing_affiliate_treasury,
-                       datum.listing_marketplace_treasury,
-                     ),
+                |> method.provision_add_option(
+                     // Add Listing affiliate if exists
+                     datum.listing_affiliate_treasury,
                      provision_base * constant.listing_affiliate_portion / constant.fixed_decimals,
                    )
                 |> method.provision_add_portion(
@@ -77,7 +73,7 @@ validator(
               method.get_provisions_final_price(
                 provisions,
                 datum.asset_price,
-                method.provision_sum(provisions),
+                datum.asset_price * constant.fees_basis / constant.fixed_decimals,
                 datum.seller_address,
                 datum.royalty,
               )
