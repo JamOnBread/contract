@@ -58,7 +58,7 @@ validator(
                    )
                 |> method.provision_add_option(
                      // Add Listing affiliate, if exists
-                       datum.listing_affiliate_treasury,
+                     datum.listing_affiliate_treasury,
                      provision_base * constant.listing_affiliate_portion / constant.fixed_decimals,
                    )
                 |> method.provision_add_portion(
