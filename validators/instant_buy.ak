@@ -106,36 +106,3 @@ validator(
     }
   }
 }
-/// test test__multiply_rounding() {
-///   let provision =
-///     100_000_000_000_000_000_000_000_000 * 10_000 * constant.selling_marketplace_portion / (
-///       constant.fixed_decimals * constant.fixed_decimals
-///     )
-///
-///   provision == 50_000_000_000_000_000_000_000_000
-/// }
-///  let provisions =
-///    dict.new()
-///    // Add JoB provision
-///    |> dict.insert_with(
-///        key: cbor.serialise(job),
-///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals),
-///        with: sum,
-///        compare: bytearray.compare
-///    )
-///    // Add Listing market treasury
-///    |> dict.insert_with(
-///        key: cbor.serialise(job),
-///        value: (job, provision_base * constant.jam_on_bread_fee_portion / constant.fixed_decimals),
-///        with: sum,
-///        compare: bytearray.compare
-///    )
-///    // Add Listing market affiliate
-///
-///    // Add Selling market treasury
-///
-///    // Add Selling market affiliate
-///
-///    // Add Selling market affiliate 2
-///
-///    // Add Royalty
