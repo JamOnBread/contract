@@ -71,7 +71,7 @@ flowchart LR
 
    tx["Transaction (Tx)"]
 
-   tx --> |Create| treasuryOut1 & treasuryOut2 & treasuryOutMore
+   tx --> |ReCreate| treasuryOut1 & treasuryOut2 & treasuryOutMore
    tx --> |Reward| user
 
    treasuryOut1[Treasury + Stake1]
@@ -140,13 +140,13 @@ flowchart LR
    buyerIn[Buyer Wallet]
 
    treasuryIn1 & treasuryIn2 & treasuryIn3 -->|Spend| tx
-   instantBuy --> |Accept| tx
-   buyerIn --> |Pay| tx
+   instantBuy --> |NFT| tx
+   buyerIn --> |ADA| tx
 
    tx["Transaction (Tx)"]
 
-   tx --> |Create| treasuryOut1 & treasuryOut2 & treasuryOut3
-   tx --> |Reward| sellerOut
+   tx --> |Provision| treasuryOut1 & treasuryOut2 & treasuryOut3
+   tx --> |ADA| sellerOut
    tx --> |NFT| buyerOut
 
    treasuryOut1[Treasury1]
@@ -178,16 +178,16 @@ flowchart LR
    treasuryIn2[Treasury2]
    treasuryIn3[Treasuries...]
    offer[Contract]
-   sellerIn[Buyer Wallet]
+   sellerIn[Seller Wallet]
 
    treasuryIn1 & treasuryIn2 & treasuryIn3 -->|Spend| tx
-   instantBuy --> |Accept| tx
+   offer --> |ADA| tx
    sellerIn --> |NFT| tx
 
    tx["Transaction (Tx)"]
 
-   tx --> |Create| treasuryOut1 & treasuryOut2 & treasuryOut3
-   tx --> |Reward| sellerOut
+   tx --> |Provision| treasuryOut1 & treasuryOut2 & treasuryOut3
+   tx --> |ADA| sellerOut
    tx --> |NFT| buyerOut
 
    treasuryOut1[Treasury1]
