@@ -7,3 +7,9 @@ validator(withdrawal_method: types.WithdrawalMethod, _number: Int) {
     method.check_transaction_is_validated(context, withdrawal_method)
   }
 }
+
+validator(withdrawal_method: types.WithdrawalMethod) {
+  fn lock_v1(_datum: Data, _redeemer: Data, context: ScriptContext) -> Bool {
+    method.check_transaction_is_validated(context, withdrawal_method)
+  }
+}
