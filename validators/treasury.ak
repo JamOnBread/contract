@@ -39,11 +39,9 @@ validator {
         (inputs.1st == 1)? && (outputs.1st == 1)? && (outputs.2nd > inputs.2nd)?
       }
       // Treasury is in withdrawal mode
-      Withdraw -> {
-
+      Withdraw ->
         // If the transaction is autorized, we can withraw same number of treasuries like output, or we can reduce it to minimal number
         method.check_transaction_is_validated(context, datum)?
-      }
     }
   }
 }
