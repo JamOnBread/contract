@@ -1,5 +1,4 @@
 use aiken/transaction.{ScriptContext}
-use common/constant
 use common/method
 use common/types
 
@@ -37,26 +36,12 @@ validator {
         // Treasury must be present only once as a input (to avoid treasury consumption),
         // but there is option to produce more then one treasury with same datum
         // (it is not problem, we can reduce number of treasuries by withdrawal method)
-        (inputs.1st == 1)? && (outputs.1st == 1)? && (outputs.2nd - inputs.2nd > constant.minimal_treasury_reward)?
+        (inputs.1st == 1)? && (outputs.1st == 1)? && (outputs.2nd > inputs.2nd)?
       }
       // Treasury is in withdrawal mode
-      Withdraw -> {
-        let inputs =
-          method.get_number_inputs_by_address_datum(
-            context.transaction.inputs,
-            address,
-            datum,
-          )
-        let outputs =
-          method.get_number_outputs_by_address_datum_and_check_validity(
-            context.transaction.outputs,
-            address,
-            datum,
-          )
-
+      Withdraw ->
         // If the transaction is autorized, we can withraw same number of treasuries like output, or we can reduce it to minimal number
-        method.check_transaction_is_validated(context, datum)? && ((outputs >= constant.minimal_number_treasuries)? || (outputs == inputs)?)?
-      }
+        method.check_transaction_is_validated(context, datum)?
     }
   }
 }
