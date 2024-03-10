@@ -1,5 +1,4 @@
 use aiken/transaction.{ScriptContext}
-use common/constant
 use common/method
 use common/types
 
@@ -41,21 +40,9 @@ validator {
       }
       // Treasury is in withdrawal mode
       Withdraw -> {
-        let inputs =
-          method.get_number_inputs_by_address_datum(
-            context.transaction.inputs,
-            address,
-            datum,
-          )
-        let outputs =
-          method.get_number_outputs_by_address_datum_and_check_validity(
-            context.transaction.outputs,
-            address,
-            datum,
-          )
 
         // If the transaction is autorized, we can withraw same number of treasuries like output, or we can reduce it to minimal number
-        method.check_transaction_is_validated(context, datum)? && ((outputs >= constant.minimal_number_treasuries)? || (outputs == inputs)?)?
+        method.check_transaction_is_validated(context, datum)?
       }
     }
   }
