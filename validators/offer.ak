@@ -76,8 +76,9 @@ validator(
                 datum.royalty,
               )
 
+            let input_ada_value = value.lovelace_of(input.value)
             // Final checks
-            (value.lovelace_of(input.value) >= datum.offered_price + constant.min_ada_value)? && (datum.offered_price > constant.minimal_contract_price)? && method.check_portions(
+            (input_ada_value >= datum.offered_price)? && (datum.offered_price > constant.minimal_contract_price)? && method.check_portions(
               selling_marketplace_portions,
               0,
             ) && method.check_all_provisions(
@@ -89,7 +90,7 @@ validator(
               context.transaction.outputs,
               datum.offerer_address,
               datum.wanted_asset,
-              constant.min_ada_value,
+              input_ada_value - datum.offered_price,
             )? && method.check_input_scripts(
               context.transaction.inputs,
               credential.ScriptCredential(treasury_script_hash),

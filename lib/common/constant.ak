@@ -1,6 +1,3 @@
-// Minimal ada value present on the contract
-pub const min_ada_value: Int = 2_000_000
-
 // If we need to wotk with percent, 10_000 = 100%
 pub const fixed_decimals: Int = 10_000
 
@@ -27,6 +24,3 @@ pub const minimal_contract_price: Int = 1_000_000
 
 // Minimal JoB reward
 pub const minimal_job_reward: Int = 100_000
-
-// Minimal treasury reward
-pub const minimal_treasury_reward: Int = 20_000

@@ -49,11 +49,7 @@ pub fn get_number_outputs_by_address_datum_and_check_validity(
         datum,
       ){
       
-        if
-        value.lovelace_of(output.value) < constant.min_ada_value || value.without_lovelace(
-          output.value,
-        ) != value.zero(){
-        
+        if value.without_lovelace(output.value) != value.zero() {
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           total + 1
@@ -84,9 +80,7 @@ pub fn get_number_outputs_ada_by_hash_datum_and_check_validity(
       ){
       
         let amount = value.lovelace_of(output.value)
-        if
-        amount < constant.min_ada_value || value.without_lovelace(output.value) != value.zero(){
-        
+        if value.without_lovelace(output.value) != value.zero() {
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           (acc.1st + 1, acc.2nd + amount)
@@ -117,9 +111,7 @@ pub fn get_number_outputs_ada_by_address_datum_and_check_validity(
       ){
       
         let amount = value.lovelace_of(output.value)
-        if
-        amount < constant.min_ada_value || value.without_lovelace(output.value) != value.zero(){
-        
+        if value.without_lovelace(output.value) != value.zero() {
           fail @"There is no minimal ADA on Output or some useless asset"
         } else {
           (acc.1st + 1, acc.2nd + amount)
@@ -286,12 +278,10 @@ pub fn get_treasury_output_value_and_validate(
   is {
     Some(output) -> {
       let amount = value.lovelace_of(output.value)
-      if
-      value.without_lovelace(output.value) == value.zero() && amount >= constant.min_ada_value{
-      
+      if value.without_lovelace(output.value) == value.zero() {
         amount
       } else {
-        fail @"There is no minimal ADA on Output or some useless asset"
+        fail @"There is some useless asset"
       }
     }
     _other -> 0
