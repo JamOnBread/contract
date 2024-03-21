@@ -441,7 +441,7 @@ pub fn provision_add(
   treasury: types.WithdrawalMethod,
   amount: Int,
 ) -> List<(types.WithdrawalMethod, Int)> {
-  if amount >= 0 {
+  if amount > 0 {
     when self is {
       [] ->
         [(treasury, amount)]
