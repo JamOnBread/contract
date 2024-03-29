@@ -1,21 +1,26 @@
 import { Lucid, Blockfrost, Script, Constr, Data, PolicyId, Unit, fromText, Tx, UTxO, OutRef, Credential } from "https://deno.land/x/lucid@0.10.7/mod.ts"
 import { getCompiledCodeParams, encodeTreasuryDatumTokens, getCompiledCode, encodeAddress, applyCodeParamas, encodeTreasuryDatumAddress } from "./common.ts"
 
-const privKey = "ed25519_sk1z5zd4ap8nyyvlh2uz5rt08xh76yjhs0v7yv58vh00z399m3vrppqfhxv0n" // Treaury
-//const privKey = "ed25519_sk1vmcvrrew9ppggulj08e9lg5w333t58qy2pmylprz4lg2ka0887kqz5zurk" // Test
+const privKey = "XXX" // Treaury
 
+/*
 const blockfrostApi = "https://cardano-preprod.blockfrost.io/api/v0"
 const blockfrostToken = "preprodVm9mYgzOYXlfFrFYfgJ2Glz7AlnMjvV9"
 const blockfrostNetwork = "Preprod"
+*/
+
+const blockfrostApi = "https://cardano-mainnet.blockfrost.io/api/v0"
+const blockfrostToken = "mainnetLzarwTLCt7qIBUnFsvN6blZvtKYQSKgc"
+const blockfrostNetwork = "Mainnet"
 
 const numberOfStakes = 10n
-const numberOfToken = 1n
+const numberOfToken = 5n
 const treasuryScriptTitle = "treasury.spend_v1"
 const instantBuyScriptTitle = "instant_buy.spend_v1"
 const offerScriptTitle = "offer.spend_v1"
 
-const jamTokenPolicy = "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a"
-const jamTokenName = "556e69717565"
+const jamTokenPolicy = "5d87ebacd1b26282675a61a1cde3e8c64282677739abb58124138e9c"
+const jamTokenName = "4a6f42"
 
 function deployScript(lucid: Lucid, tx: Tx, scriptRef: Script, lock: Script, stake: string): Tx {
     const stakeCredential = {
@@ -86,12 +91,12 @@ console.log(await lucid.wallet.address())
 
 let tx = lucid.newTx()
 
-
 /*
 tx = deployScript(lucid, tx, treasuryScript, lockScript, jamStakes[0][0])
 tx = deployScript(lucid, tx, instantBuyScript, lockScript, jamStakes[0][0])
 tx = deployScript(lucid, tx, offerScript, lockScript, jamStakes[0][0])
 */
+
 Array.from(jamStakes).forEach(stake => tx = deployScript(lucid, tx, stake[1], lockScript, jamStakes[0][0]))
 
 
