@@ -17,9 +17,6 @@ const offerScriptTitle = "offer.spend_v1"
 const jamTokenPolicy = "74ce41370dd9103615c8399c51f47ecee980467ecbfcfbec5b59d09a"
 const jamTokenName = "556e69717565"
 
-const allwaysFailingScript = getCompiledCode("common.always_fail_v1")
-
-
 function deployScript(lucid: Lucid, tx: Tx, scriptRef: Script, lock: Script, stake: string): Tx {
     const stakeCredential = {
         type: "Script",
@@ -89,12 +86,13 @@ console.log(await lucid.wallet.address())
 
 let tx = lucid.newTx()
 
+
 /*
 tx = deployScript(lucid, tx, treasuryScript, lockScript, jamStakes[0][0])
 tx = deployScript(lucid, tx, instantBuyScript, lockScript, jamStakes[0][0])
 tx = deployScript(lucid, tx, offerScript, lockScript, jamStakes[0][0])
 */
-// Array.from(jamStakes).forEach(stake => deployScript(lucid, tx, stake[1], lockScript, jamStakes[0][0]))
+Array.from(jamStakes).forEach(stake => tx = deployScript(lucid, tx, stake[1], lockScript, jamStakes[0][0]))
 
 
 //const utxos = await lucid.utxosByOutRef([
